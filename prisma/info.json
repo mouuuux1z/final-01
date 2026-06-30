@@ -1,0 +1,67 @@
+{
+  "theme": {
+    "colors": {
+      "primary": "#0066ff",
+      "primary_accent": "#1a75ff",
+      "background_gradient": "linear-gradient(180deg, #eef2ff 0%, #f8fafc 40%, #ffffff 100%)",
+      "card_background": "#ffffff",
+      "card_secondary": "#f4f7fe",
+      "navigation_bar_bg": "#ffffff",
+      "text_dark": "#090f20",
+      "text_muted": "#7a8293",
+      "active_tab": "#0066ff",
+      "inactive_tab": "#a2aab8"
+    },
+    "backgrounds": {
+      "app_root_gradient": {
+        "type": "linear",
+        "angle": "180deg",
+        "color_stops": [
+          { "color": "#eef2ff", "position": "0%" },
+          { "color": "#f8fafc", "position": "40%" },
+          { "color": "#ffffff", "position": "100%" }
+        ],
+        "css_value": "linear-gradient(180deg, #eef2ff 0%, #f8fafc 40%, #ffffff 100%)",
+        "description": "تدرج ناعم جداً يبدأ بسماوي باهت مائل للبنفسجي في الأعلى وينتهي بالأبيض النقي"
+      },
+      "card_glassmorphism": {
+        "background_color": "rgba(255, 255, 255, 0.85)",
+        "backdrop_filter": "blur(20px) saturate(190%)",
+        "webkit_backdrop_filter": "blur(20px) saturate(190%)",
+        "border": "1px solid rgba(255, 255, 255, 0.4)",
+        "description": "تأثير الزجاج الشفاف للكروت العائمة والقائمة السفلية"
+      },
+      "card_solid_pure": {
+        "background_color": "#ffffff",
+        "description": "الخلفية البيضاء الصافية للكروت العادية"
+      },
+      "card_solid_subtle": {
+        "background_color": "#f4f7fe",
+        "description": "خلفية رمادية خفيفة للعناصر غير النشطة"
+      },
+      "mesh_sky_gradient": {
+        "type": "complex-linear",
+        "primary_sky_blue": "#9cd2ff",
+        "soft_cloud_white": "#f4f9ff",
+        "deep_accent_blue": "#7ec2ff",
+        "css_value": "linear-gradient(135deg, #f4f9ff 0%, #aadeff 40%, #7ec2ff 100%)",
+        "css_mesh_effect": "background-color: #9cd2ff; background-image: radial-gradient(at 20% 20%, #f4f9ff 0px, transparent 50%), radial-gradient(at 80% 40%, #c4e4ff 0px, transparent 50%), radial-gradient(at 40% 80%, #7ec2ff 0px, transparent 50%);",
+        "description": "تدرج شبكي يحاكي ألوان السماء والسحاب خلف جميع الكروت"
+      }
+    },
+    "typography": {
+      "font_family_arabic": "Tajawal, sans-serif",
+      "font_family_english": "Inter, sans-serif",
+      "title_weight": "700",
+      "body_weight": "400"
+    },
+    "layout": {
+      "screen_padding": "24px",
+      "card_border_radius": "28px",
+      "button_border_radius": "20px",
+      "pill_border_radius": "50px",
+      "box_shadow_soft": "0px 10px 25px rgba(0, 102, 255, 0.05)",
+      "box_shadow_nav": "0px -5px 20px rgba(0, 0, 0, 0.02)"
+    }
+  }
+}

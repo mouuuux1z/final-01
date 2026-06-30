@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const adminAuth_middleware_js_1 = require("../../middleware/adminAuth.middleware.js");
+const validate_middleware_js_1 = require("../../middleware/validate.middleware.js");
+const admin_controller_js_1 = require("./admin.controller.js");
+const admin_schema_js_1 = require("./admin.schema.js");
+const doctors_schema_js_1 = require("../doctors/doctors.schema.js");
+const router = (0, express_1.Router)();
+router.use(...adminAuth_middleware_js_1.adminAuthMiddleware);
+router.get('/analytics', (0, validate_middleware_js_1.validate)(admin_schema_js_1.analyticsQuerySchema, 'query'), admin_controller_js_1.adminController.analytics);
+router.get('/complaints', admin_controller_js_1.adminController.listComplaints);
+router.patch('/complaints/:id', (0, validate_middleware_js_1.validate)(admin_schema_js_1.complaintIdParamSchema, 'params'), (0, validate_middleware_js_1.validate)(admin_schema_js_1.updateComplaintSchema), admin_controller_js_1.adminController.updateComplaint);
+router.get('/site-content', admin_controller_js_1.adminController.getSiteContent);
+router.put('/site-content', (0, validate_middleware_js_1.validate)(admin_schema_js_1.siteContentSchema), admin_controller_js_1.adminController.upsertSiteContent);
+router.get('/doctors/pending', (0, validate_middleware_js_1.validate)(admin_schema_js_1.userListQuerySchema, 'query'), admin_controller_js_1.adminController.listPendingDoctors);
+router.patch('/doctors/:id/verify', (0, validate_middleware_js_1.validate)(doctors_schema_js_1.doctorIdParamSchema, 'params'), (0, validate_middleware_js_1.validate)(admin_schema_js_1.verifyDoctorSchema), admin_controller_js_1.adminController.verifyDoctor);
+router.get('/admins', admin_controller_js_1.adminController.listAdmins);
+router.post('/admins', (0, validate_middleware_js_1.validate)(admin_schema_js_1.createAdminSchema), admin_controller_js_1.adminController.createAdmin);
+exports.default = router;
+//# sourceMappingURL=admin.routes.js.map

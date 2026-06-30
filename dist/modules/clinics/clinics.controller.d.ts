@@ -1,0 +1,31 @@
+import type { Request, Response } from 'express';
+export declare class ClinicsController {
+    getMe: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    updateMe: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    createDoctor: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    assignDoctor: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    updateDoctorStatus: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    removeDoctor: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    getDoctorAppointments: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    getDoctorAvailability: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    getDoctorSchedules: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    generateDoctorRecurringAvailability: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    generateDoctorAvailability: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    createDoctorAvailabilitySlot: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    deleteDoctorAvailabilitySlot: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    manualBookForDoctor: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    acceptDoctorAppointment: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    rejectDoctorAppointment: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    markDoctorAppointmentAttendance: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    getDoctorChatMessages: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    sendDoctorChatMessage: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    markDoctorChatAsRead: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    getDoctorChatConversationReplies: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    updateDoctorChatConversationReplies: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    setDoctorOnlineStatus: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    adminList: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    adminListPending: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    adminGet: (req: Request, res: Response, next: import("express").NextFunction) => void;
+    adminUpdate: (req: Request, res: Response, next: import("express").NextFunction) => void;
+}
+export declare const clinicsController: ClinicsController;

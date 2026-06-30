@@ -1,0 +1,25 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.adminPatientRoutes = exports.patientRoutes = void 0;
+const express_1 = require("express");
+const client_1 = require("@prisma/client");
+const auth_middleware_js_1 = require("../../middleware/auth.middleware.js");
+const adminAuth_middleware_js_1 = require("../../middleware/adminAuth.middleware.js");
+const validate_middleware_js_1 = require("../../middleware/validate.middleware.js");
+const patients_controller_js_1 = require("./patients.controller.js");
+const patients_schema_js_1 = require("./patients.schema.js");
+const zod_1 = require("zod");
+const client_2 = require("@prisma/client");
+const updateStatusSchema = zod_1.z.object({ status: zod_1.z.nativeEnum(client_2.EntityStatus) });
+const router = (0, express_1.Router)();
+exports.patientRoutes = router;
+router.use(auth_middleware_js_1.authMiddleware, (0, auth_middleware_js_1.requireUserTypes)(client_1.UserType.PATIENT));
+router.get('/me', patients_controller_js_1.patientsController.getMe);
+router.patch('/me', (0, validate_middleware_js_1.validate)(patients_schema_js_1.updatePatientSchema), patients_controller_js_1.patientsController.updateMe);
+const adminRouter = (0, express_1.Router)();
+exports.adminPatientRoutes = adminRouter;
+adminRouter.use(...adminAuth_middleware_js_1.adminAuthMiddleware);
+adminRouter.get('/', patients_controller_js_1.patientsController.adminList);
+adminRouter.get('/:id', (0, validate_middleware_js_1.validate)(patients_schema_js_1.patientIdParamSchema, 'params'), patients_controller_js_1.patientsController.adminGet);
+adminRouter.patch('/:id/status', (0, validate_middleware_js_1.validate)(patients_schema_js_1.patientIdParamSchema, 'params'), (0, validate_middleware_js_1.validate)(updateStatusSchema), patients_controller_js_1.patientsController.adminUpdateStatus);
+//# sourceMappingURL=patients.routes.js.map

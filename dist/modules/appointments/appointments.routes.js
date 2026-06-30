@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const client_1 = require("@prisma/client");
+const auth_middleware_js_1 = require("../../middleware/auth.middleware.js");
+const validate_middleware_js_1 = require("../../middleware/validate.middleware.js");
+const appointments_controller_js_1 = require("./appointments.controller.js");
+const appointments_schema_js_1 = require("./appointments.schema.js");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_js_1.authMiddleware);
+router.get('/', (0, validate_middleware_js_1.validate)(appointments_schema_js_1.listAppointmentsQuerySchema, 'query'), appointments_controller_js_1.appointmentsController.list);
+router.get('/:id', (0, validate_middleware_js_1.validate)(appointments_schema_js_1.appointmentIdParamSchema, 'params'), appointments_controller_js_1.appointmentsController.getById);
+router.post('/', (0, auth_middleware_js_1.requireUserTypes)(client_1.UserType.PATIENT), (0, validate_middleware_js_1.validate)(appointments_schema_js_1.bookAppointmentSchema), appointments_controller_js_1.appointmentsController.book);
+router.post('/manual', (0, auth_middleware_js_1.requireUserTypes)(client_1.UserType.DOCTOR), (0, validate_middleware_js_1.validate)(appointments_schema_js_1.doctorManualBookSchema), appointments_controller_js_1.appointmentsController.doctorManualBook);
+router.post('/:id/cancel', (0, auth_middleware_js_1.requireUserTypes)(client_1.UserType.PATIENT, client_1.UserType.DOCTOR), (0, validate_middleware_js_1.validate)(appointments_schema_js_1.appointmentIdParamSchema, 'params'), appointments_controller_js_1.appointmentsController.cancel);
+router.patch('/:id/reschedule', (0, auth_middleware_js_1.requireUserTypes)(client_1.UserType.PATIENT), (0, validate_middleware_js_1.validate)(appointments_schema_js_1.appointmentIdParamSchema, 'params'), (0, validate_middleware_js_1.validate)(appointments_schema_js_1.rescheduleAppointmentSchema), appointments_controller_js_1.appointmentsController.reschedule);
+router.post('/:id/accept', (0, auth_middleware_js_1.requireUserTypes)(client_1.UserType.DOCTOR), (0, validate_middleware_js_1.validate)(appointments_schema_js_1.appointmentIdParamSchema, 'params'), appointments_controller_js_1.appointmentsController.accept);
+router.post('/:id/reject', (0, auth_middleware_js_1.requireUserTypes)(client_1.UserType.DOCTOR), (0, validate_middleware_js_1.validate)(appointments_schema_js_1.appointmentIdParamSchema, 'params'), appointments_controller_js_1.appointmentsController.reject);
+router.patch('/:id/attendance', (0, auth_middleware_js_1.requireUserTypes)(client_1.UserType.DOCTOR), (0, validate_middleware_js_1.validate)(appointments_schema_js_1.appointmentIdParamSchema, 'params'), (0, validate_middleware_js_1.validate)(appointments_schema_js_1.updateAttendanceSchema), appointments_controller_js_1.appointmentsController.markAttendance);
+exports.default = router;
+//# sourceMappingURL=appointments.routes.js.map

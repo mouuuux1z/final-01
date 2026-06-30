@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const client_1 = require("@prisma/client");
+const auth_middleware_js_1 = require("../../middleware/auth.middleware.js");
+const upload_middleware_js_1 = require("../../middleware/upload.middleware.js");
+const validate_middleware_js_1 = require("../../middleware/validate.middleware.js");
+const chat_controller_js_1 = require("./chat.controller.js");
+const chat_schema_js_1 = require("./chat.schema.js");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_js_1.authMiddleware, (0, auth_middleware_js_1.requireUserTypes)(client_1.UserType.DOCTOR, client_1.UserType.PATIENT));
+router.get('/conversations', (0, validate_middleware_js_1.validate)(chat_schema_js_1.listConversationsQuerySchema, 'query'), chat_controller_js_1.chatController.listConversations);
+router.get('/access', (0, validate_middleware_js_1.validate)(chat_schema_js_1.chatAccessQuerySchema, 'query'), chat_controller_js_1.chatController.getAccess);
+router.get('/messages', (0, validate_middleware_js_1.validate)(chat_schema_js_1.conversationQuerySchema, 'query'), chat_controller_js_1.chatController.getConversation);
+router.post('/messages', upload_middleware_js_1.uploadChatFile.single('file'), (0, validate_middleware_js_1.validate)(chat_schema_js_1.sendMessageSchema), chat_controller_js_1.chatController.sendMessage);
+router.post('/messages/read', (0, validate_middleware_js_1.validate)(chat_schema_js_1.markReadSchema), chat_controller_js_1.chatController.markAsRead);
+router.get('/conversations/replies', (0, validate_middleware_js_1.validate)(chat_schema_js_1.conversationSettingsQuerySchema, 'query'), chat_controller_js_1.chatController.getConversationReplies);
+router.patch('/conversations/replies', (0, auth_middleware_js_1.requireUserTypes)(client_1.UserType.DOCTOR), (0, validate_middleware_js_1.validate)(chat_schema_js_1.conversationRepliesSchema), chat_controller_js_1.chatController.updateConversationReplies);
+exports.default = router;
+//# sourceMappingURL=chat.routes.js.map
