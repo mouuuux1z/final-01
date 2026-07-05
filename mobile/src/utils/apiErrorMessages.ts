@@ -1,0 +1,85 @@
+import i18n from '../i18n';
+
+export const API_ERROR_MESSAGE_KEYS: Record<string, string> = {
+  'Something went wrong': 'errors.api.generic',
+  'Internal server error': 'errors.api.internalServer',
+  'Validation failed': 'errors.api.validationFailed',
+  'Invalid request body': 'errors.api.invalidRequestBody',
+  'Authentication required': 'errors.api.authenticationRequired',
+  'Session expired': 'errors.api.sessionExpired',
+  'Invalid session': 'errors.api.invalidSession',
+  'Invalid or expired token': 'errors.api.invalidToken',
+  'Invalid credentials': 'errors.api.invalidCredentials',
+  'Email already registered': 'errors.api.emailAlreadyRegistered',
+  'User not found': 'errors.api.userNotFound',
+  'Account not active': 'errors.api.accountNotActive',
+  'Account suspended': 'errors.api.accountSuspended',
+  'Account is inactive': 'errors.api.accountInactive',
+  'Account disabled': 'errors.api.accountDisabled',
+  'Your clinic account is pending admin approval': 'errors.api.clinicPendingApproval',
+  'Patient not found': 'errors.api.patientNotFound',
+  'Doctor not found': 'errors.api.doctorNotFound',
+  'Doctor not available': 'errors.api.doctorUnavailable',
+  'Doctor account is not active': 'errors.api.doctorNotActive',
+  'Doctor not found in this clinic': 'errors.api.doctorNotFoundInClinic',
+  'Doctor not found in clinic': 'errors.api.doctorNotFoundInClinic',
+  'Doctor already belongs to another clinic': 'errors.api.doctorAlreadyInClinic',
+  'Clinic not found': 'errors.api.clinicNotFound',
+  'Clinic account is not active': 'errors.api.clinicNotActive',
+  'Booking temporarily blocked': 'errors.api.bookingBlocked',
+  'Commitment booking block active': 'errors.api.commitmentBookingBlocked',
+  'Selected time slot is not available': 'errors.api.slotUnavailable',
+  'Appointment not found': 'errors.api.appointmentNotFound',
+  'Cannot cancel this appointment': 'errors.api.cannotCancelAppointment',
+  'Failed to cancel appointment': 'errors.api.cancelFailed',
+  'Cannot reschedule cancelled appointment': 'errors.api.cannotRescheduleCancelled',
+  'Failed to reschedule appointment': 'errors.api.rescheduleFailed',
+  'Appointment is not pending': 'errors.api.appointmentNotPending',
+  'Attendance can only be marked for confirmed appointments': 'errors.api.attendanceConfirmedOnly',
+  'Attendance has already been recorded': 'errors.api.attendanceAlreadyRecorded',
+  'Cannot mark attendance before the appointment time': 'errors.api.attendanceTooEarly',
+  'Schedule already exists for this day': 'errors.api.scheduleExists',
+  'Schedule not found': 'errors.api.scheduleNotFound',
+  'Slot already exists': 'errors.api.slotExists',
+  'Slot not found or already booked': 'errors.api.slotNotFoundOrBooked',
+  'No slots could be generated with the provided settings': 'errors.api.noSlotsGenerated',
+  'All generated slots overlap with existing appointments': 'errors.api.slotsOverlap',
+  'Forbidden': 'errors.api.forbidden',
+  'Notification not found': 'errors.api.notificationNotFound',
+  'Doctor has not started this conversation yet': 'errors.api.chatNotStarted',
+  'Only the doctor can start a conversation': 'errors.api.chatDoctorOnlyStart',
+  'Doctor is not accepting replies': 'errors.api.chatRepliesDisabled',
+  'File upload failed. Please upload a valid certificate file.': 'errors.api.fileUploadFailed',
+  'Request timed out. Check your connection and try again.': 'errors.api.networkTimeout',
+  'Cannot reach server. Make sure the backend is running on http://localhost:3000':
+    'errors.api.networkUnreachable',
+  'Invalid uuid': 'errors.api.invalidUuid',
+  'Time must be in HH:MM format': 'errors.api.invalidTimeFormat',
+  'End time must be after start time': 'errors.api.endTimeBeforeStart',
+};
+
+export function translateApiMessage(message: string): string {
+  const trimmed = message.trim();
+  if (!trimmed) {
+    return i18n.t('errors.api.generic');
+  }
+
+  const key = API_ERROR_MESSAGE_KEYS[trimmed];
+  if (key) {
+    return i18n.t(key);
+  }
+
+  return trimmed;
+}
+
+export function getLocalizedApiFallback(): string {
+  return i18n.t('errors.api.generic');
+}
+
+export function getLocalizedNetworkTimeoutMessage(): string {
+  return i18n.t('errors.api.networkTimeout');
+}
+
+export function getLocalizedNetworkUnreachableMessage(): string {
+  return i18n.t('errors.api.networkUnreachable');
+}

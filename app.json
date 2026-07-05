@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "MYDoc",
+    "slug": "mydoc",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./mobile/assets/android-icon-foreground.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./mobile/assets/android-icon-foreground.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#090a0f"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mydoc.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./mobile/assets/android-icon-foreground.png",
+        "backgroundColor": "#090a0f"
+      },
+      "package": "com.mydoc.app"
+    },
+    "web": {
+      "favicon": "./mobile/assets/android-icon-foreground.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-localization",
+      "expo-asset"
+    ],
+    "extra": {
+      "apiUrl": "https://0012-production.up.railway.app/api",
+      "socketUrl": "https://0012-production.up.railway.app",
+      "eas": {
+        "projectId": "b6bac7e2-c9ed-4330-b029-33380d27edb2"
+      }
+    }
+  }
+}
