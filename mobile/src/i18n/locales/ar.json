@@ -85,7 +85,7 @@
       "chatRepliesDisabled": "الطبيب لا يقبل الردود حالياً",
       "fileUploadFailed": "فشل رفع الملف. يرجى رفع شهادة صالحة",
       "networkTimeout": "انتهت مهلة الطلب. تحقق من الاتصال وحاول مجدداً",
-      "networkUnreachable": "تعذر الاتصال بالخادم. تأكد أن الخادم يعمل على http://localhost:3000",
+      "networkUnreachable": "تعذر الاتصال بالخادم. تحقق من الاتصال بـ https://0012-production.up.railway.app",
       "invalidUuid": "معرّف غير صالح",
       "invalidTimeFormat": "صيغة الوقت يجب أن تكون HH:MM",
       "endTimeBeforeStart": "وقت النهاية يجب أن يكون بعد وقت البداية"
@@ -116,7 +116,7 @@
     "city": "المدينة",
     "location": "الموقع",
     "loginError": "البريد أو كلمة المرور غير صحيحة",
-    "networkError": "تعذر الاتصال بالخادم. شغّل npm start وتأكد أن Backend يعمل على المنفذ 3000.",
+    "networkError": "تعذر الاتصال بالخادم. تحقق من الاتصال بـ https://0012-production.up.railway.app",
     "testAccounts": "حسابات تجريبية",
     "testPatient": "مريض: mohammed.patient@mydoc.com",
     "testDoctor": "طبيب: ahmed.cardio@mydoc.com",

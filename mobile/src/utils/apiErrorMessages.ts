@@ -51,7 +51,7 @@ export const API_ERROR_MESSAGE_KEYS: Record<string, string> = {
   'Doctor is not accepting replies': 'errors.api.chatRepliesDisabled',
   'File upload failed. Please upload a valid certificate file.': 'errors.api.fileUploadFailed',
   'Request timed out. Check your connection and try again.': 'errors.api.networkTimeout',
-  'Cannot reach server. Make sure the backend is running on http://localhost:3000':
+  'Cannot reach server. Make sure the backend is running on https://0012-production.up.railway.app':
     'errors.api.networkUnreachable',
   'Invalid uuid': 'errors.api.invalidUuid',
   'Time must be in HH:MM format': 'errors.api.invalidTimeFormat',

@@ -1,30 +1,17 @@
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
 
 const extra = Constants.expoConfig?.extra ?? {};
 
-function resolveDevHost(fallbackHost = 'localhost'): string {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    if (hostname) return hostname;
-  }
-  return fallbackHost;
-}
+export const PRODUCTION_HOST = '0012-production.up.railway.app';
+export const PRODUCTION_API_URL = `https://${PRODUCTION_HOST}/api`;
+export const PRODUCTION_SOCKET_URL = `https://${PRODUCTION_HOST}`;
 
-function buildApiUrl(host: string): string {
-  return `http://${host}:3000/api`;
-}
+export const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ??
+  (extra.apiUrl as string | undefined) ??
+  PRODUCTION_API_URL;
 
-function buildSocketUrl(host: string): string {
-  return `http://${host}:3000`;
-}
-
-const configuredApiUrl =
-  process.env.EXPO_PUBLIC_API_URL ?? (extra.apiUrl as string | undefined);
-const configuredSocketUrl =
-  process.env.EXPO_PUBLIC_SOCKET_URL ?? (extra.socketUrl as string | undefined);
-
-const devHost = resolveDevHost();
-
-export const API_URL = configuredApiUrl ?? buildApiUrl(devHost);
-export const SOCKET_URL = configuredSocketUrl ?? buildSocketUrl(devHost);
+export const SOCKET_URL =
+  process.env.EXPO_PUBLIC_SOCKET_URL ??
+  (extra.socketUrl as string | undefined) ??
+  PRODUCTION_SOCKET_URL;

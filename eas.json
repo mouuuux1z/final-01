@@ -6,16 +6,28 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://0012-production.up.railway.app/api",
+        "EXPO_PUBLIC_SOCKET_URL": "https://0012-production.up.railway.app"
+      }
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://0012-production.up.railway.app/api",
+        "EXPO_PUBLIC_SOCKET_URL": "https://0012-production.up.railway.app"
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://0012-production.up.railway.app/api",
+        "EXPO_PUBLIC_SOCKET_URL": "https://0012-production.up.railway.app"
+      }
     }
   },
   "submit": {
