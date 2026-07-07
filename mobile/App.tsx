@@ -8,7 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFonts } from 'expo-font';
 import {
   Inter_400Regular,
@@ -52,7 +52,7 @@ function UnauthorizedHandler() {
 }
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_700Bold,
@@ -60,8 +60,16 @@ export default function App() {
     Tajawal_500Medium,
     Tajawal_700Bold,
   });
+  const [fontTimeoutReached, setFontTimeoutReached] = useState(false);
 
-  if (!fontsLoaded) {
+  useEffect(() => {
+    const timer = setTimeout(() => setFontTimeoutReached(true), 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const fontsReady = fontsLoaded || fontTimeoutReached || Boolean(fontError);
+
+  if (!fontsReady) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>

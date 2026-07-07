@@ -21,6 +21,16 @@ export function RootNavigator() {
   useSocketSync();
 
   useEffect(() => {
+    const hydrationTimer = setTimeout(() => {
+      if (!useAuthStore.getState().isHydrated) {
+        useAuthStore.getState().setHydrated(true);
+      }
+    }, 2500);
+
+    return () => clearTimeout(hydrationTimer);
+  }, []);
+
+  useEffect(() => {
     if (!isHydrated || sessionChecked.current) return;
     sessionChecked.current = true;
 
