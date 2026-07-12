@@ -85,7 +85,7 @@
       "chatRepliesDisabled": "Doctor is not accepting replies",
       "fileUploadFailed": "File upload failed. Please upload a valid certificate file.",
       "networkTimeout": "Request timed out. Check your connection and try again.",
-      "networkUnreachable": "Cannot reach server. Check your connection to https://0012-production.up.railway.app",
+      "networkUnreachable": "Cannot reach server. Check your connection to http://197.140.142.178",
       "invalidUuid": "Invalid uuid",
       "invalidTimeFormat": "Time must be in HH:MM format",
       "endTimeBeforeStart": "End time must be after start time"
@@ -116,7 +116,7 @@
     "city": "City",
     "location": "Location",
     "loginError": "Invalid email or password",
-    "networkError": "Cannot reach server. Check your connection to https://0012-production.up.railway.app",
+    "networkError": "Cannot reach server. Check your connection to http://197.140.142.178",
     "testAccounts": "Test accounts",
     "testPatient": "Patient: mohammed.patient@mydoc.com",
     "testDoctor": "Doctor: ahmed.cardio@mydoc.com",

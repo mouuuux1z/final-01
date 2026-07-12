@@ -18,38 +18,53 @@ export function DoctorPatientsScreen(_props: Props) {
   const { t } = useTranslation();
   const rootNavigation = useNavigation<NativeStackNavigationProp<DoctorRootStackParamList>>();
 
-  const { data: patients, isLoading } = useQuery({
+  const { data: patients, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['doctor-patients'],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<PaginatedResponse<Appointment>>>('/appointments', {
-        params: { limit: 100 },
+        params: { limit: 50, page: 1 },
       });
       const seen = new Map<string, NonNullable<Appointment['patient']>>();
-      for (const apt of data.data.items) {
+      for (const apt of data.data?.items ?? []) {
         if (apt.patient && !seen.has(apt.patient.id)) {
           seen.set(apt.patient.id, apt.patient);
         }
       }
       return Array.from(seen.values());
     },
+    staleTime: 60_000,
+    retry: 1,
   });
 
   return (
     <View className="flex-1 pt-14">
       <View className="px-6">
-        <Text className="mb-6 text-3xl font-bold text-slate-900">{t('doctor.patients')}</Text>
+        <Text className="mb-6 text-3xl font-bold text-on-sky">{t('doctor.patients')}</Text>
       </View>
 
       {isLoading ? (
-        <ActivityIndicator className="mt-10" color={UI.primary} />
+        <View className="mt-10 items-center">
+          <ActivityIndicator color={UI.primary} />
+          <Text className="mt-3 text-sm text-on-sky-muted">{t('common.loading')}</Text>
+        </View>
+      ) : isError ? (
+        <View className="mt-10 items-center px-6">
+          <Text className="mb-3 text-on-sky-muted">{t('common.error')}</Text>
+          <Pressable onPress={() => void refetch()} className="rounded-pill px-4 py-2" style={{ backgroundColor: UI.primary }}>
+            <Text className="text-sm font-semibold text-white">{t('common.retry')}</Text>
+          </Pressable>
+        </View>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
           data={patients ?? []}
           keyExtractor={(item) => item.id}
+          refreshing={isRefetching}
+          onRefresh={() => void refetch()}
           contentContainerClassName="px-6 pb-10"
           ListEmptyComponent={
             <View className="mt-10 items-center">
-              <Text className="text-slate-500">{t('doctor.noPatients')}</Text>
+              <Text className="text-on-sky-muted">{t('doctor.noPatients')}</Text>
             </View>
           }
           renderItem={({ item }) => (

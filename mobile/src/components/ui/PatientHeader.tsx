@@ -12,7 +12,7 @@ export function PatientHeader() {
   return (
     <View className="mb-5 flex-row items-center justify-end">
       <View className="items-end">
-        <Text className="text-xs text-body">{t('common.welcome')}</Text>
+        <Text className="text-xs text-on-sky-muted">{t('common.welcome')}</Text>
         <View className="mt-1">
           <AppLogo size={48} />
         </View>
@@ -32,14 +32,20 @@ export function SearchHero({ onPress }: SearchHeroProps) {
   return (
     <View className="mb-6">
       <Text
-        className="mb-4 text-2xl text-heading"
+        className="mb-4 text-2xl text-on-sky"
         style={{ fontFamily: typography.fontFamily, fontWeight: typography.headingWeight }}
       >
         {t('home.searchHeroTitle')}
       </Text>
-      <Pressable onPress={onPress} className="active:opacity-90">
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={t('home.searchPlaceholder')}
+        className="active:opacity-90"
+      >
         <GlassSurface className="flex-row items-center gap-3 rounded-pill px-5 py-4">
           <View
+            pointerEvents="none"
             className="h-10 w-10 items-center justify-center rounded-pill"
             style={{ backgroundColor: UI.backgrounds.cardSubtle }}
           >
@@ -64,7 +70,7 @@ export function SectionHeader({ title, actionLabel, onAction }: SectionHeaderPro
   return (
     <View className="mb-4 flex-row items-center justify-between">
       <Text
-        className="text-lg text-heading"
+        className="text-lg text-on-sky"
         style={{ fontFamily: typography.fontFamily, fontWeight: typography.headingWeight }}
       >
         {title}

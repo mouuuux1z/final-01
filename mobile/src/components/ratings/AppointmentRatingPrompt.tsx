@@ -30,6 +30,8 @@ export function AppointmentRatingPrompt({
   const { data, isLoading } = useQuery({
     queryKey: ['doctor-rating-me', doctorId],
     queryFn: () => getMyRatingForDoctor(doctorId),
+    enabled: variant === 'card' || expanded,
+    retry: 1,
   });
 
   useEffect(() => {
@@ -51,6 +53,17 @@ export function AppointmentRatingPrompt({
     onError: (error) => showAlert(t('common.error'), getApiErrorMessage(error)),
   });
 
+  if (variant === 'button' && !expanded) {
+    return (
+      <View className="mt-3">
+        <Button
+          title={t('ratings.rateDoctor')}
+          onPress={() => setExpanded(true)}
+        />
+      </View>
+    );
+  }
+
   if (isLoading || !data?.eligible) {
     return null;
   }
@@ -62,15 +75,6 @@ export function AppointmentRatingPrompt({
     }
     submitMutation.mutate();
   };
-
-  if (variant === 'button' && !expanded) {
-    return (
-      <Button
-        title={data.rating ? t('ratings.editRating') : t('ratings.rateDoctor')}
-        onPress={() => setExpanded(true)}
-      />
-    );
-  }
 
   if (variant === 'button' && expanded) {
     return (

@@ -1,5 +1,6 @@
 import { Platform, StyleSheet, View } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { TabActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { AppIconName } from '../AppIcon';
@@ -17,6 +18,10 @@ export interface GlassBottomTabBarProps extends BottomTabBarProps {
   showBadgeForRoute?: (routeName: string) => boolean;
 }
 
+/**
+ * Non-absolute tab bar so Android/react-native-screens cannot cover touch targets.
+ * Uses TabActions.jumpTo with target so nested tab navigators switch reliably.
+ */
 export function GlassBottomTabBar({
   state,
   descriptors,
@@ -29,21 +34,12 @@ export function GlassBottomTabBar({
 
   return (
     <View
-      style={{
-        paddingHorizontal: 16,
-        paddingTop: 8,
-        paddingBottom: Math.max(insets.bottom, Platform.OS === 'web' ? 16 : 10),
-        backgroundColor: 'transparent',
-      }}
+      style={[
+        styles.shell,
+        { paddingBottom: Math.max(insets.bottom, Platform.OS === 'web' ? 16 : 10) },
+      ]}
     >
-      <GlassSurface
-        radius={UI.radius.card}
-        className="bottom-nav-menu"
-        style={{
-          paddingVertical: 8,
-          paddingHorizontal: 8,
-        }}
-      >
+      <GlassSurface radius={UI.radius.card} className="bottom-nav-menu" style={styles.surface}>
         <View style={styles.menu}>
           {state.routes.map((route, routeIndex) => {
             const config = routes[route.name];
@@ -67,8 +63,14 @@ export function GlassBottomTabBar({
                     target: route.key,
                     canPreventDefault: true,
                   });
-                  if (!isFocused && !event.defaultPrevented) {
-                    navigation.navigate(route.name, route.params);
+
+                  if (event.defaultPrevented) return;
+
+                  if (!isFocused) {
+                    navigation.dispatch({
+                      ...TabActions.jumpTo(route.name, route.params),
+                      target: state.key,
+                    });
                   }
                 }}
               />
@@ -81,6 +83,15 @@ export function GlassBottomTabBar({
 }
 
 const styles = StyleSheet.create({
+  shell: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    backgroundColor: 'transparent',
+  },
+  surface: {
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+  },
   menu: {
     flexDirection: 'row',
     alignItems: 'center',

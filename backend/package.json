@@ -1,0 +1,54 @@
+{
+  "name": "mydoc-backend",
+  "version": "1.0.0",
+  "description": "MYDoc - Medical Appointment Booking API",
+  "main": "dist/server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "node ensure-env.cjs --generate && tsc",
+    "start": "node start-production.cjs",
+    "production:build": "node ensure-env.cjs --generate && npx tsc && node scripts/verify-build.cjs",
+    "production:start": "node start-production.cjs",
+    "render:start": "node start-production.cjs",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:restore-doctors": "tsx prisma/restore-doctors.ts",
+    "db:reset": "prisma migrate reset",
+    "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.9.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.1",
+    "prisma": "^6.9.0",
+    "socket.io": "^4.8.1",
+    "typescript": "^5.8.3",
+    "uuid": "^11.1.0",
+    "zod": "^3.25.36",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.15.0",
+    "@types/uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4"
+  }
+}

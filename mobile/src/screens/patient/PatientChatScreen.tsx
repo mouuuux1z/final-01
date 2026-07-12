@@ -55,7 +55,7 @@ export function PatientChatScreen({ navigation, route }: Props) {
       const { data } = await api.get<ApiResponse<PaginatedResponse<ChatMessage>>>('/chat/messages', {
         params: { doctorId, patientId, limit: 100 },
       });
-      return data.data.items;
+      return data.data?.items ?? [];
     },
     enabled: Boolean(doctorId && patientId && access?.initiated),
   });

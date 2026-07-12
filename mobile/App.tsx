@@ -21,6 +21,7 @@ import {
   Tajawal_700Bold,
 } from '@expo-google-fonts/tajawal';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { AppErrorBoundary } from './src/components/AppErrorBoundary';
 import { LoadingScreen } from './src/components/LoadingScreen';
 import { ScreenBackground } from './src/components/ui/ScreenBackground';
 import { setUnauthorizedHandler, hydrateTokenCache } from './src/services/api';
@@ -87,8 +88,10 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
           <ScreenBackground>
             <UnauthorizedHandler />
-            <RootNavigator />
-            <StatusBar style="light" />
+            <AppErrorBoundary>
+              <RootNavigator />
+            </AppErrorBoundary>
+            <StatusBar style="dark" />
           </ScreenBackground>
         </QueryClientProvider>
       </SafeAreaProvider>

@@ -13,7 +13,7 @@ export function ScreenShell({
   children,
   scroll = true,
   padded = true,
-  bottomInset = 88,
+  bottomInset = 24,
   contentContainerClassName,
   className,
   ...scrollProps
@@ -40,7 +40,7 @@ export function ScreenShell({
   return (
     <View
       className={`flex-1 ${horizontal} ${className ?? ''}`}
-      style={{ paddingTop, paddingBottom: insets.bottom }}
+      style={{ paddingTop, paddingBottom: bottomInset + insets.bottom }}
     >
       {children}
     </View>

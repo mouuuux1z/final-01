@@ -41,9 +41,10 @@ export function DoctorAppointmentsPanel({
     return { from, to: toDateInputValue(end) };
   }, [manualBookingVisible]);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: [...queryKeyPrefix, 'appointments'],
     queryFn: () => workspaceApi.listAppointments({ limit: 100 }),
+    retry: 1,
   });
 
   const { data: availableSlots = [], isLoading: slotsLoading } = useQuery({
@@ -92,9 +93,19 @@ export function DoctorAppointmentsPanel({
     return <ActivityIndicator className="my-10" color={UI.primary} />;
   }
 
+  if (isError) {
+    return (
+      <View className="mt-10 items-center px-6">
+        <Text className="mb-3 text-slate-500">{t('common.error')}</Text>
+        <Button title={t('common.retry')} onPress={() => void refetch()} />
+      </View>
+    );
+  }
+
   return (
     <>
       <FlatList
+        style={{ flex: 1 }}
         data={bookedAppointments}
         keyExtractor={(item) => item.id}
         refreshing={isRefetching}

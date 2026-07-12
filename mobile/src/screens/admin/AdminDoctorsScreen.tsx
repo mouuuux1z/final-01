@@ -31,7 +31,7 @@ export function AdminDoctorsScreen({ navigation }: Props) {
         '/admin/doctors',
         { params: { limit: 100 } },
       );
-      return response.data.items;
+      return response.data?.items ?? [];
     },
   });
 

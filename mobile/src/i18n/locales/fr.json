@@ -84,7 +84,7 @@
       "chatRepliesDisabled": "Le médecin n'accepte pas les réponses",
       "fileUploadFailed": "Échec du téléversement. Veuillez envoyer un certificat valide",
       "networkTimeout": "Délai de requête dépassé. Vérifiez votre connexion",
-      "networkUnreachable": "Impossible d'atteindre le serveur sur https://0012-production.up.railway.app",
+      "networkUnreachable": "Impossible d'atteindre le serveur sur http://197.140.142.178",
       "invalidUuid": "UUID invalide",
       "invalidTimeFormat": "L'heure doit être au format HH:MM",
       "endTimeBeforeStart": "L'heure de fin doit être après l'heure de début"
@@ -115,7 +115,7 @@
     "city": "Ville",
     "location": "Emplacement",
     "loginError": "E-mail ou mot de passe invalide",
-    "networkError": "Impossible de joindre le serveur. Vérifiez la connexion à https://0012-production.up.railway.app",
+    "networkError": "Impossible de joindre le serveur. Vérifiez la connexion à http://197.140.142.178",
     "testAccounts": "Comptes de démonstration",
     "testAccountsHint": "Appuyez sur un compte pour vous connecter. Mot de passe : {{password}}",
     "testQuickLogin": "Connexion",

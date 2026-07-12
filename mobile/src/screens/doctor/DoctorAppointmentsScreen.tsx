@@ -28,14 +28,16 @@ export function DoctorAppointmentsScreen(_props: Props) {
   const rootNavigation = useNavigation<NativeStackNavigationProp<DoctorRootStackParamList>>();
   const [markingId, setMarkingId] = useState<string | null>(null);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['appointments', 'doctor'],
     queryFn: async () => {
       const { data: response } = await api.get<ApiResponse<PaginatedResponse<Appointment>>>('/appointments', {
-        params: { limit: 100 },
+        params: { statuses: 'PENDING,CONFIRMED', sort: 'asc', limit: 50, page: 1 },
       });
-      return response.data.items;
+      return response.data?.items ?? [];
     },
+    staleTime: 60_000,
+    retry: 1,
   });
 
   const attendanceMutation = useMutation({
@@ -56,22 +58,33 @@ export function DoctorAppointmentsScreen(_props: Props) {
   return (
     <View className="flex-1 pt-14">
       <View className="px-6">
-        <Text className="mb-1 text-3xl font-bold text-slate-900">{t('doctor.appointments')}</Text>
-        <Text className="mb-6 text-base text-slate-500">{t('doctor.appointmentsHint')}</Text>
+        <Text className="mb-1 text-3xl font-bold text-on-sky">{t('doctor.appointments')}</Text>
+        <Text className="mb-6 text-base text-on-sky-muted">{t('doctor.appointmentsHint')}</Text>
       </View>
 
       {isLoading ? (
-        <ActivityIndicator className="mt-10" color={UI.primary} />
+        <View className="mt-10 items-center">
+          <ActivityIndicator color={UI.primary} />
+          <Text className="mt-3 text-sm text-on-sky-muted">{t('common.loading')}</Text>
+        </View>
+      ) : isError ? (
+        <View className="mt-10 items-center px-6">
+          <Text className="mb-3 text-on-sky-muted">{t('common.error')}</Text>
+          <Text className="text-primary" onPress={() => void refetch()}>
+            {t('common.retry')}
+          </Text>
+        </View>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
           data={queueAppointments}
           keyExtractor={(item) => item.id}
           refreshing={isRefetching}
           onRefresh={() => void refetch()}
-          contentContainerClassName="px-6 pb-10"
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40, flexGrow: 1 }}
           ListEmptyComponent={
             <View className="mt-10 items-center">
-              <Text className="text-slate-500">{t('doctor.noAppointments')}</Text>
+              <Text className="text-on-sky-muted">{t('doctor.noAppointments')}</Text>
             </View>
           }
           renderItem={({ item, index }) => {

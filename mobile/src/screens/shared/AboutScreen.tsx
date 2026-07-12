@@ -22,12 +22,12 @@ export function AboutScreen() {
       <BackButton onPress={() => navigation.goBack()} />
 
       <Text
-        className="mb-2 text-2xl text-heading"
+        className="mb-2 text-2xl text-on-sky"
         style={{ fontFamily: typography.fontFamily, fontWeight: typography.headingWeight }}
       >
         {policy.title}
       </Text>
-      <Text className="mb-5 text-sm text-body">{policy.lastUpdated}</Text>
+      <Text className="mb-5 text-sm text-on-sky-muted">{policy.lastUpdated}</Text>
 
       <View
         className="rounded-card bg-white p-5"

@@ -2,7 +2,7 @@
   "expo": {
     "name": "MYDoc",
     "slug": "mydoc",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./mobile/assets/android-icon-foreground.png",
     "userInterfaceStyle": "automatic",
@@ -10,18 +10,23 @@
     "splash": {
       "image": "./mobile/assets/android-icon-foreground.png",
       "resizeMode": "contain",
-      "backgroundColor": "#090a0f"
+      "backgroundColor": "#E8F4FC"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mydoc.app"
+      "bundleIdentifier": "com.mydoc.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./mobile/assets/android-icon-foreground.png",
-        "backgroundColor": "#090a0f"
+        "backgroundColor": "#E8F4FC"
       },
-      "package": "com.mydoc.app"
+      "package": "com.mydoc.app",
+      "versionCode": 2,
+      "usesCleartextTraffic": true
     },
     "web": {
       "favicon": "./mobile/assets/android-icon-foreground.png",
@@ -30,14 +35,25 @@
     "plugins": [
       "expo-secure-store",
       "expo-localization",
-      "expo-asset"
+      "expo-asset",
+      "expo-document-picker",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "./plugins/withAndroidCleartext.js"
     ],
     "extra": {
-      "apiUrl": "https://0012-production.up.railway.app/api",
-      "socketUrl": "https://0012-production.up.railway.app",
+      "apiUrl": "http://197.140.142.178/api",
+      "socketUrl": "http://197.140.142.178",
       "eas": {
-        "projectId": "b6bac7e2-c9ed-4330-b029-33380d27edb2"
+        "projectId": "9900ac58-1334-464b-ab3e-8b6335978d3f"
       }
-    }
+    },
+    "owner": "moppl"
   }
 }

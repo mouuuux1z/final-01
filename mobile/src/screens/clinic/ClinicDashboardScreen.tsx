@@ -23,12 +23,14 @@ export function ClinicDashboardScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user) as ClinicUser | null;
 
-  const { data: clinic, isLoading } = useQuery({
+  const { data: clinic, isLoading, isError, refetch } = useQuery({
     queryKey: ['clinic', 'me'],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<ClinicProfile>>('/clinics/me');
       return data.data;
     },
+    staleTime: 60_000,
+    retry: 1,
   });
 
   const doctors = clinic?.doctors ?? [];
@@ -60,7 +62,17 @@ export function ClinicDashboardScreen({ navigation }: Props) {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator className="mt-10" color={UI.primary} />
+        <View className="mt-10 items-center">
+          <ActivityIndicator color={UI.primary} />
+          <Text className="mt-3 text-sm text-on-sky-muted">{t('common.loading')}</Text>
+        </View>
+      ) : isError ? (
+        <View className="mt-10 items-center px-6">
+          <Text className="mb-3 text-on-sky-muted">{t('common.error')}</Text>
+          <Pressable onPress={() => void refetch()} className="rounded-pill px-4 py-2" style={{ backgroundColor: UI.primary }}>
+            <Text className="text-sm font-semibold text-white">{t('common.retry')}</Text>
+          </Pressable>
+        </View>
       ) : (
         <>
           <DashboardStatsRow>

@@ -29,8 +29,10 @@ export function ClinicSettingsScreen(_props: Props) {
   const { handleLogout } = useLogout();
 
   useEffect(() => {
-    void fetchProfile();
-  }, [fetchProfile]);
+    if (!user?.id) {
+      void fetchProfile();
+    }
+  }, [fetchProfile, user?.id]);
 
   return (
     <ScrollView className="flex-1" contentContainerClassName="pb-10">

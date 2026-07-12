@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import type { NavigatorScreenParams } from '@react-navigation/native';
 import { PatientTabBar } from '../components/ui/PatientTabBar';
+import { createTabScreen } from '../components/createTabScreen';
 import { HomeScreen } from '../screens/patient/HomeScreen';
 import { SearchDoctorsScreen } from '../screens/patient/SearchDoctorsScreen';
 import { AppointmentsScreen } from '../screens/patient/AppointmentsScreen';
@@ -44,15 +45,20 @@ export type PatientStackParamList = {
 const Tab = createBottomTabNavigator<PatientTabParamList>();
 const Stack = createNativeStackNavigator<PatientStackParamList>();
 
+const HomeTab = createTabScreen(HomeScreen, 'tabs.home');
+const AppointmentsTab = createTabScreen(AppointmentsScreen, 'tabs.appointments');
+const MessagesTab = createTabScreen(PatientMessagesScreen, 'chat.messages');
+const ProfileTab = createTabScreen(ProfileScreen, 'tabs.myAccount');
+
 function PatientTabNavigator() {
   const { t } = useTranslation();
 
   return (
-    <Tab.Navigator tabBar={(props) => <PatientTabBar {...props} />} screenOptions={tabNavigatorScreenOptions}>
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: t('tabs.home') }} />
-      <Tab.Screen name="Appointments" component={AppointmentsScreen} options={{ title: t('tabs.appointments') }} />
-      <Tab.Screen name="Messages" component={PatientMessagesScreen} options={{ title: t('chat.messages') }} />
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: t('tabs.myAccount') }} />
+    <Tab.Navigator tabBar={(props) => <PatientTabBar {...props} />} screenOptions={tabNavigatorScreenOptions} detachInactiveScreens>
+      <Tab.Screen name="Home" component={HomeTab} options={{ title: t('tabs.home') }} />
+      <Tab.Screen name="Appointments" component={AppointmentsTab} options={{ title: t('tabs.appointments') }} />
+      <Tab.Screen name="Messages" component={MessagesTab} options={{ title: t('chat.messages') }} />
+      <Tab.Screen name="Profile" component={ProfileTab} options={{ title: t('tabs.myAccount') }} />
     </Tab.Navigator>
   );
 }

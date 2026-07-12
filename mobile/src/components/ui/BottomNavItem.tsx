@@ -13,8 +13,8 @@ import { AppIcon, type AppIconName } from '../AppIcon';
 import { UI, activeGlowStyle } from '../../theme/ui';
 import { useTypography } from '../../hooks/useTypography';
 
-const TRANSITION_MS = 250;
-const PRESS_SCALE = 0.93;
+const TRANSITION_MS = 180;
+const PRESS_SCALE = 0.94;
 const EASE = Easing.bezier(0.4, 0, 0.2, 1);
 const ICON_SIZE = 22;
 
@@ -26,6 +26,7 @@ interface BottomNavItemProps {
   showBadge?: boolean;
 }
 
+/** Use RN Pressable — RNGH Pressable often fires pressIn feedback without onPress. */
 export function BottomNavItem({ icon, label, isActive, onPress, showBadge }: BottomNavItemProps) {
   const typography = useTypography();
   const scale = useRef(new Animated.Value(1)).current;
@@ -39,52 +40,47 @@ export function BottomNavItem({ icon, label, isActive, onPress, showBadge }: Bot
     }).start();
   };
 
+  const tint = isActive ? '#ffffff' : UI.tabBar.inactive;
+  const pillBackground = isActive ? UI.primary : 'transparent';
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={isActive ? { selected: true } : {}}
+      accessibilityLabel={label}
+      hitSlop={12}
       onPress={onPress}
       onPressIn={() => animateScale(PRESS_SCALE)}
       onPressOut={() => animateScale(1)}
-      className="press-scale"
       style={[styles.slot, Platform.OS === 'web' ? ({ cursor: 'pointer' } as ViewStyle) : undefined]}
     >
-      {(state) => {
-        const hovered = Platform.OS === 'web' && 'hovered' in state && Boolean(state.hovered);
-        const isHovered = hovered && !isActive;
-        const tint = isActive ? '#ffffff' : isHovered ? UI.primary : UI.tabBar.inactive;
-        const pillBackground = isActive ? UI.primary : isHovered ? UI.tabBar.hover : 'transparent';
-
-        return (
-          <Animated.View
-            className={isActive ? 'bottom-nav-item bottom-nav-item--active' : 'bottom-nav-item'}
-            style={[
-              styles.pill,
-              { backgroundColor: pillBackground, transform: [{ scale }] },
-              isActive ? activeGlowStyle() : undefined,
-            ]}
-          >
-            <View style={styles.iconWrap}>
-              <AppIcon name={icon} size={ICON_SIZE} color={tint} strokeWidth={isActive ? 2.5 : 1.75} />
-              {showBadge ? <View style={styles.badge} /> : null}
-            </View>
-            <Text
-              style={[
-                styles.label,
-                {
-                  color: tint,
-                  fontFamily: typography.fontFamilyMedium,
-                  fontWeight: isActive ? '700' : '400',
-                },
-              ]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {label}
-            </Text>
-          </Animated.View>
-        );
-      }}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.pill,
+          { backgroundColor: pillBackground, transform: [{ scale }] },
+          isActive ? activeGlowStyle() : undefined,
+        ]}
+      >
+        <View style={styles.iconWrap}>
+          <AppIcon name={icon} size={ICON_SIZE} color={tint} strokeWidth={isActive ? 2.5 : 1.75} />
+          {showBadge ? <View style={styles.badge} /> : null}
+        </View>
+        <Text
+          style={[
+            styles.label,
+            {
+              color: tint,
+              fontFamily: typography.fontFamilyMedium,
+              fontWeight: isActive ? '700' : '400',
+            },
+          ]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {label}
+        </Text>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -103,8 +99,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 6,
-    paddingHorizontal: 4,
-    gap: 4,
+    paddingHorizontal: 2,
+    gap: 2,
   },
   iconWrap: {
     width: 24,
@@ -129,6 +125,6 @@ const styles = StyleSheet.create({
     lineHeight: 12,
     textAlign: 'center',
     width: '100%',
-    paddingHorizontal: 2,
+    paddingHorizontal: 1,
   },
 });

@@ -54,9 +54,10 @@ export function DoctorMessagesPanel({
 }: DoctorMessagesPanelProps) {
   const { t } = useTranslation();
 
-  const { data: appointments, isLoading } = useQuery({
+  const { data: appointments, isLoading, isError, refetch } = useQuery({
     queryKey: [...queryKeyPrefix, 'appointments', 'messages'],
     queryFn: () => workspaceApi.listAppointments({ limit: 100 }),
+    retry: 1,
   });
 
   const patients = useMemo(() => collectPatients(appointments ?? []), [appointments]);
@@ -65,8 +66,20 @@ export function DoctorMessagesPanel({
     return <ActivityIndicator className="my-10" color={UI.primary} />;
   }
 
+  if (isError) {
+    return (
+      <View className="mt-10 items-center px-6">
+        <Text className="mb-3 text-slate-500">{t('common.error')}</Text>
+        <Pressable onPress={() => void refetch()} className="rounded-pill px-4 py-2" style={{ backgroundColor: UI.primary }}>
+          <Text className="text-sm font-semibold text-white">{t('common.retry')}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <FlatList
+      style={{ flex: 1 }}
       data={patients}
       keyExtractor={(item) => item.id}
       contentContainerClassName="px-6 pb-10"

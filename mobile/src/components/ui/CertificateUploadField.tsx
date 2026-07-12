@@ -9,19 +9,30 @@ interface CertificateUploadFieldProps {
   certificate: PickedFile | null;
   onPick: () => void;
   error?: string;
+  tone?: 'default' | 'onSky';
 }
 
-export function CertificateUploadField({ certificate, onPick, error }: CertificateUploadFieldProps) {
+export function CertificateUploadField({
+  certificate,
+  onPick,
+  error,
+  tone = 'default',
+}: CertificateUploadFieldProps) {
   const { t } = useTranslation();
   const typography = useTypography();
   const { width } = useWindowDimensions();
   const sideBySide = width >= 560;
+  const labelColor = tone === 'onSky' ? UI.onBackground : '#000000';
 
   return (
     <View style={styles.root}>
       <Text
-        className="mb-2 text-sm text-heading"
-        style={{ fontFamily: typography.fontFamilyMedium, fontWeight: typography.bodyWeight }}
+        className="mb-2 text-sm"
+        style={{
+          color: labelColor,
+          fontFamily: typography.fontFamilyMedium,
+          fontWeight: typography.bodyWeight,
+        }}
       >
         {t('auth.certificateLabel')}
       </Text>

@@ -369,15 +369,17 @@ export const useAuthStore = create<AuthState>()(
 
 
       fetchProfile: async () => {
-
         const { token, userType } = get();
-
         if (!token || !userType) return;
 
-        const { data } = await api.get<ApiResponse<User>>('/auth/me');
-
-        set({ user: data.data });
-
+        try {
+          const { data } = await api.get<ApiResponse<User>>('/auth/me');
+          if (data?.data) {
+            set({ user: data.data });
+          }
+        } catch {
+          // Keep existing session user if profile refresh fails.
+        }
       },
 
       mergePatientProfile: (profile) => {

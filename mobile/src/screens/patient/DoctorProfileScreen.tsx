@@ -286,11 +286,11 @@ export function DoctorProfileScreen({ navigation, route }: Props) {
 
           <ActivityIndicator color={UI.primary} />
 
-        ) : reviews?.items.length ? (
+        ) : (reviews?.items?.length ?? 0) > 0 ? (
 
           <View className="gap-4">
 
-            {reviews.items.map((review) => (
+            {(reviews?.items ?? []).map((review) => (
 
               <View key={review.id} className="border-b pb-4" style={{ borderColor: UI.border }}>
 

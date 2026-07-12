@@ -102,10 +102,14 @@ export function RegisterScreen({ navigation, route }: Props) {
   };
 
   const handlePickCertificate = async () => {
-    const file = await pickCertificateFile();
-    if (file) {
-      setCertificate(file);
-      clearFieldError('certificate');
+    try {
+      const file = await pickCertificateFile();
+      if (file) {
+        setCertificate(file);
+        clearFieldError('certificate');
+      }
+    } catch {
+      setFormError(t('auth.errors.certificateRequired'));
     }
   };
 
@@ -186,8 +190,8 @@ export function RegisterScreen({ navigation, route }: Props) {
           <Text className="text-base font-medium text-primary">{t('common.back')}</Text>
         </Pressable>
 
-        <Text className="mb-2 text-3xl font-bold text-slate-900">{t(titleKey)}</Text>
-        <Text className="mb-6 text-base text-slate-500">{t('auth.registerSubtitle')}</Text>
+        <Text className="mb-2 text-3xl font-bold text-heading">{t(titleKey)}</Text>
+        <Text className="mb-6 text-base text-body">{t('auth.registerSubtitle')}</Text>
 
         {userType === 'DOCTOR' || userType === 'CLINIC' ? (
           <View className="mb-4 rounded-card border border-amber-200 bg-amber-50 px-4 py-3">

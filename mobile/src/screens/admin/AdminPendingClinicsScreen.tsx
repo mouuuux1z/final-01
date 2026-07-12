@@ -31,7 +31,7 @@ export function AdminPendingClinicsScreen({ navigation }: Props) {
         '/admin/clinics/pending',
         { params: { limit: 50 } },
       );
-      return response.data.items;
+      return response.data?.items ?? [];
     },
   });
 

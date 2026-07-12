@@ -54,15 +54,15 @@ export function createDoctorWorkspaceApi(
     return {
       listAppointments: async (params) => {
         const { data } = await api.get(`${base}/appointments`, { params });
-        return data.data.items ?? data.data;
+        return Array.isArray(data.data?.items) ? data.data.items : Array.isArray(data.data) ? data.data : [];
       },
       listAvailability: async (params) => {
         const { data } = await api.get(`${base}/availability`, { params });
-        return data.data;
+        return Array.isArray(data.data) ? data.data : Array.isArray(data.data?.items) ? data.data.items : [];
       },
       listSchedules: async () => {
         const { data } = await api.get(`${base}/schedules`);
-        return data.data;
+        return Array.isArray(data.data) ? data.data : [];
       },
       createAvailabilitySlot: async (date, time) => {
         const { data } = await api.post(`${base}/availability`, { date, time });
@@ -104,15 +104,15 @@ export function createDoctorWorkspaceApi(
   return {
     listAppointments: async (params) => {
       const { data } = await api.get('/appointments', { params });
-      return data.data.items ?? data.data;
+      return Array.isArray(data.data?.items) ? data.data.items : Array.isArray(data.data) ? data.data : [];
     },
     listAvailability: async (params) => {
       const { data } = await api.get('/doctor/me/availability', { params });
-      return data.data;
+      return Array.isArray(data.data) ? data.data : Array.isArray(data.data?.items) ? data.data.items : [];
     },
     listSchedules: async () => {
       const { data } = await api.get('/doctor/me/schedules');
-      return data.data;
+      return Array.isArray(data.data) ? data.data : [];
     },
     createAvailabilitySlot: async (date, time) => {
       const { data } = await api.post('/doctor/me/availability', { date, time });

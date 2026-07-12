@@ -21,8 +21,8 @@ module.exports = {
         },
         heading: '#090f20',
         body: '#7a8293',
-        'on-sky': '#f4f7fe',
-        'on-sky-muted': '#b8c0d0',
+        'on-sky': '#090f20',
+        'on-sky-muted': '#5a6578',
       },
       borderRadius: {
         card: '28px',

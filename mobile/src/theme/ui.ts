@@ -45,25 +45,25 @@ export function getTypography(language?: string): AppTypography {
   };
 }
 
-/** Night starfield background (Uiverse-style radial sky). */
+/** Medical light background (image + soft blue fallback). */
 export const BACKGROUNDS = {
   meshSky: {
-    /** Base night sky (kept key for existing imports). */
-    primarySkyBlue: '#090a0f',
-    base: '#090a0f',
-    purpleGlow: '#321b35',
-    softCloudWhite: '#321b35',
-    deepAccentBlue: '#090a0f',
-    midToneBlue: '#1a1020',
-    linearColors: ['#090a0f', '#1a1020', '#321b35'] as const,
+    /** Soft sky blue fallback under the image (kept key for existing imports). */
+    primarySkyBlue: '#E8F4FC',
+    base: '#E8F4FC',
+    purpleGlow: '#D6ECF8',
+    softCloudWhite: '#FFFFFF',
+    deepAccentBlue: '#B8D9F0',
+    midToneBlue: '#D0E8F7',
+    linearColors: ['#D6ECF8', '#E8F4FC', '#FFFFFF'] as const,
     linearLocations: [0, 0.45, 1] as const,
-    cssGradient: 'radial-gradient(ellipse at bottom, #321b35 0%, #090a0f 100%)',
-    css: 'background-color: #090a0f; background-image: radial-gradient(ellipse at bottom, #321b35 0%, #090a0f 100%);',
+    cssGradient: 'linear-gradient(180deg, #D6ECF8 0%, #E8F4FC 45%, #FFFFFF 100%)',
+    css: 'background-color: #E8F4FC; background-image: linear-gradient(180deg, #D6ECF8 0%, #E8F4FC 45%, #FFFFFF 100%);',
   },
   appRootGradient: {
-    colors: ['#090a0f', '#1a1020', '#321b35'] as const,
+    colors: ['#D6ECF8', '#E8F4FC', '#FFFFFF'] as const,
     locations: [0, 0.45, 1] as const,
-    css: 'radial-gradient(ellipse at bottom, #321b35 0%, #090a0f 100%)',
+    css: 'linear-gradient(180deg, #D6ECF8 0%, #E8F4FC 45%, #FFFFFF 100%)',
   },
   glass: {
     backgroundColor: '#ffffff',
@@ -78,11 +78,11 @@ export const UI = {
   primary: '#0066ff',
   primaryAccent: '#1a75ff',
   primaryLight: '#f4f9ff',
-  background: '#090a0f',
-  backgroundMid: '#1a1020',
-  backgroundEnd: '#321b35',
-  onBackground: '#F4F7FE',
-  onBackgroundMuted: '#B8C0D0',
+  background: '#E8F4FC',
+  backgroundMid: '#D6ECF8',
+  backgroundEnd: '#FFFFFF',
+  onBackground: '#090f20',
+  onBackgroundMuted: '#5a6578',
   surface: BACKGROUNDS.cardPure,
   input: BACKGROUNDS.cardSubtle,
   danger: '#f44336',

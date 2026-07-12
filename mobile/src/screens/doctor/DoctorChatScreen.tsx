@@ -30,7 +30,7 @@ export type DoctorChatScreenParams = {
 
 interface DoctorChatScreenProps {
   navigation: { goBack: () => void };
-  route: { params: DoctorChatScreenParams };
+  route: { params?: DoctorChatScreenParams };
 }
 
 function formatTime(iso: string): string {
@@ -42,25 +42,31 @@ export function DoctorChatScreen({ navigation, route }: DoctorChatScreenProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const authDoctorId = useAuthStore((s) => s.user?.id);
-  const { patientId, patientName, doctorId: routeDoctorId, chatMode } = route.params;
+  const params = route.params;
+  const patientId = params?.patientId ?? '';
+  const patientName = params?.patientName ?? '';
+  const routeDoctorId = params?.doctorId;
+  const chatMode = params?.chatMode;
 
   const doctorId = routeDoctorId ?? authDoctorId;
   const mode: DoctorChatMode = chatMode ?? (routeDoctorId ? 'clinic' : 'doctor');
+  const hasPatient = Boolean(params?.patientId);
 
   const chatApi = useMemo(() => {
-    if (!doctorId) return null;
+    if (!doctorId || !hasPatient) return null;
     return createDoctorChatApi(mode, doctorId);
-  }, [doctorId, mode]);
+  }, [doctorId, mode, hasPatient]);
 
   const [message, setMessage] = useState('');
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
-  useChatRoom(doctorId, patientId);
+  useChatRoom(doctorId, hasPatient ? patientId : undefined);
 
-  const { data: messages, isLoading } = useQuery({
+  const { data: messages, isLoading, isError, refetch } = useQuery({
     queryKey: ['chat', mode, doctorId, patientId],
     queryFn: () => chatApi!.getMessages(patientId),
-    enabled: Boolean(chatApi),
+    enabled: Boolean(chatApi) && hasPatient,
+    retry: 1,
   });
 
   const sendMutation = useMutation({
@@ -82,15 +88,15 @@ export function DoctorChatScreen({ navigation, route }: DoctorChatScreenProps) {
   }, [message, sendMutation]);
 
   useEffect(() => {
-    if (messages?.length && chatApi) {
+    if (messages?.length && chatApi && hasPatient) {
       listRef.current?.scrollToEnd({ animated: true });
       void chatApi.markAsRead(patientId);
     }
-  }, [messages?.length, chatApi, patientId]);
+  }, [messages?.length, chatApi, patientId, hasPatient]);
 
   useEffect(() => {
     const socket = getSocket();
-    if (!socket || !doctorId || !patientId) return;
+    if (!socket || !doctorId || !hasPatient) return;
 
     const handleIncoming = (incoming: ChatMessage) => {
       if (incoming.doctorId !== doctorId || incoming.patientId !== patientId) return;
@@ -101,9 +107,20 @@ export function DoctorChatScreen({ navigation, route }: DoctorChatScreenProps) {
     return () => {
       socket.off(SocketEvents.CHAT_MESSAGE, handleIncoming);
     };
-  }, [doctorId, patientId, mode, queryClient]);
+  }, [doctorId, patientId, mode, queryClient, hasPatient]);
 
   const hasStarted = (messages?.length ?? 0) > 0;
+
+  if (!hasPatient) {
+    return (
+      <View className="flex-1 items-center justify-center px-6">
+        <Text className="mb-4 text-center text-on-sky">{t('common.error')}</Text>
+        <Pressable onPress={() => navigation.goBack()} className="rounded-pill bg-primary px-5 py-3">
+          <Text className="font-semibold text-white">{t('common.back')}</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   if (!chatApi || !doctorId) {
     return (
@@ -139,8 +156,16 @@ export function DoctorChatScreen({ navigation, route }: DoctorChatScreenProps) {
 
       {isLoading ? (
         <ActivityIndicator className="mt-10" color={UI.primary} />
+      ) : isError ? (
+        <View className="mt-10 items-center px-6">
+          <Text className="mb-3 text-slate-500">{t('common.error')}</Text>
+          <Pressable onPress={() => void refetch()} className="rounded-pill px-4 py-2" style={{ backgroundColor: UI.primary }}>
+            <Text className="text-sm font-semibold text-white">{t('common.retry')}</Text>
+          </Pressable>
+        </View>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
           ref={listRef}
           data={messages ?? []}
           keyExtractor={(item) => item.id}

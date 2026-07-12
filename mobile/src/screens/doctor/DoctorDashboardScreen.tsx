@@ -38,37 +38,44 @@ export function DoctorDashboardScreen({ navigation }: Props) {
 
   const today = toDateInputValue();
 
-  const { data: todayAppointments } = useQuery({
-    queryKey: ['appointments', 'doctor-today', today],
+  const { data: dashboardAppointments, isError, refetch } = useQuery({
+    queryKey: ['appointments', 'doctor-dashboard', user?.id, today],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<PaginatedResponse<Appointment>>>('/appointments', {
-        params: { limit: 200 },
+        params: {
+          from: today,
+          statuses: 'PENDING,CONFIRMED',
+          sort: 'asc',
+          limit: 100,
+        },
       });
-      return data.data.items.filter(
-        (item) =>
-          getAppointmentDateKey(item.date) === today && isActiveQueueAppointment(item.status),
-      );
+      return data.data?.items ?? [];
     },
-    refetchInterval: 15000,
+    enabled: !!user?.id,
+    staleTime: 60_000,
+    retry: 1,
   });
 
-  const { data: upcomingAppointments } = useQuery({
-    queryKey: ['appointments', 'doctor-upcoming', today],
-    queryFn: async () => {
-      const { data } = await api.get<ApiResponse<PaginatedResponse<Appointment>>>('/appointments', {
-        params: { limit: 200 },
-      });
-      return sortAppointmentsByQueue(
-        data.data.items.filter(
+  const todayAppointments = useMemo(
+    () =>
+      (dashboardAppointments ?? []).filter(
+        (item) => getAppointmentDateKey(item.date) === today && isActiveQueueAppointment(item.status),
+      ),
+    [dashboardAppointments, today],
+  );
+
+  const upcomingAppointments = useMemo(
+    () =>
+      sortAppointmentsByQueue(
+        (dashboardAppointments ?? []).filter(
           (item) =>
             getAppointmentDateKey(item.date) > today &&
             isActiveQueueAppointment(item.status) &&
             isAppointmentUpcoming(item.date, item.time),
         ),
-      ).slice(0, 10);
-    },
-    refetchInterval: 15000,
-  });
+      ).slice(0, 10),
+    [dashboardAppointments, today],
+  );
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
 
@@ -141,7 +148,14 @@ export function DoctorDashboardScreen({ navigation }: Props) {
         <Text className="mb-1 text-lg font-semibold text-on-sky">{t('doctor.upcomingAppointments')}</Text>
         <Text className="mb-4 text-sm text-on-sky-muted">{t('doctor.upcomingAppointmentsHint')}</Text>
 
-        {filteredUpcoming.length === 0 ? (
+        {isError ? (
+          <View className="rounded-card border border-dashed border-slate-200 bg-white px-4 py-8">
+            <Text className="mb-3 text-center text-slate-500">{t('common.error')}</Text>
+            <Text className="text-center text-primary" onPress={() => void refetch()}>
+              {t('common.retry')}
+            </Text>
+          </View>
+        ) : filteredUpcoming.length === 0 ? (
           <View className="rounded-card border border-dashed border-slate-200 bg-white px-4 py-8">
             <Text className="text-center text-slate-500">
               {normalizedSearch ? t('doctor.noSearchResults') : t('doctor.noUpcomingAppointments')}

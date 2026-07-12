@@ -26,7 +26,7 @@ export function createDoctorChatApi(mode: DoctorChatMode, doctorId: string): Doc
         const { data } = await api.get<ApiResponse<PaginatedResponse<ChatMessage>>>(`${base}/messages`, {
           params: { patientId, limit: 100 },
         });
-        return data.data.items;
+        return data.data?.items ?? [];
       },
       sendMessage: async (patientId, message) => {
         await api.post(`${base}/messages`, { patientId, message });
@@ -39,7 +39,7 @@ export function createDoctorChatApi(mode: DoctorChatMode, doctorId: string): Doc
           `${base}/conversations/replies`,
           { params: { patientId } },
         );
-        return data.data;
+        return data.data ?? { repliesEnabled: false };
       },
       updateConversationReplies: async (patientId, repliesEnabled) => {
         await api.patch(`${base}/conversations/replies`, { patientId, repliesEnabled });
@@ -53,7 +53,7 @@ export function createDoctorChatApi(mode: DoctorChatMode, doctorId: string): Doc
       const { data } = await api.get<ApiResponse<PaginatedResponse<ChatMessage>>>('/chat/messages', {
         params: { doctorId, patientId, limit: 100 },
       });
-      return data.data.items;
+      return data.data?.items ?? [];
     },
     sendMessage: async (patientId, message) => {
       await api.post('/chat/messages', { doctorId, patientId, message });
@@ -65,7 +65,7 @@ export function createDoctorChatApi(mode: DoctorChatMode, doctorId: string): Doc
       const { data } = await api.get<ApiResponse<{ repliesEnabled: boolean }>>('/chat/conversations/replies', {
         params: { doctorId, patientId },
       });
-      return data.data;
+      return data.data ?? { repliesEnabled: false };
     },
     updateConversationReplies: async (patientId, repliesEnabled) => {
       await api.patch('/chat/conversations/replies', { doctorId, patientId, repliesEnabled });

@@ -12,8 +12,8 @@ export function DoctorScheduleScreen() {
   return (
     <View className="flex-1 pt-14">
       <View className="px-6">
-        <Text className="mb-1 text-3xl font-bold text-slate-900">{t('doctor.schedule')}</Text>
-        <Text className="mb-4 text-base text-slate-500">{t('doctor.scheduleManagementHint')}</Text>
+        <Text className="mb-1 text-3xl font-bold text-on-sky">{t('doctor.schedule')}</Text>
+        <Text className="mb-4 text-base text-on-sky-muted">{t('doctor.scheduleManagementHint')}</Text>
       </View>
       <DoctorSchedulePanel workspaceApi={workspaceApi} queryKeyPrefix={queryKeyPrefix} />
     </View>

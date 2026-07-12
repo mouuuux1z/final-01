@@ -31,7 +31,7 @@ export function AdminPendingDoctorsScreen({ navigation }: Props) {
         '/admin/doctors/pending',
         { params: { limit: 50 } },
       );
-      return response.data.items;
+      return response.data?.items ?? [];
     },
   });
 

@@ -2,36 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── 1. App Root — Night Starfield (web) ─── */
+/* ─── 1. App Root — Medical light background (web) ─── */
 html,
 body,
 #root {
   min-height: 100vh;
   margin: 0;
-  background-color: #090a0f;
-  background-image: radial-gradient(ellipse at bottom, #321b35 0%, #090a0f 100%);
+  background-color: #e8f4fc;
+  background-image: linear-gradient(180deg, #d6ecf8 0%, #e8f4fc 45%, #ffffff 100%);
   background-attachment: fixed;
-}
-
-.starfield-layer--slow {
-  animation: animStar 50s linear infinite;
-}
-
-.starfield-layer--medium {
-  animation: animStar 100s linear infinite;
-}
-
-.starfield-layer--fast {
-  animation: animStar 150s linear infinite;
-}
-
-@keyframes animStar {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-2000px);
-  }
 }
 
 html[lang='ar'] body {
@@ -57,19 +36,19 @@ html[lang='fr'] body {
 
   .text-on-sky {
     @apply font-bold;
-    color: #f4f7fe;
+    color: #090f20;
   }
 
   .text-on-sky-muted {
-    color: #b8c0d0;
+    color: #5a6578;
     font-weight: 400;
   }
 
-  /* ─── Starfield helpers (stack scenes) ─── */
+  /* ─── Background helpers (stack scenes) ─── */
   .mesh-sky-bg,
   .mesh-sky-surface {
-    background-color: #090a0f;
-    background-image: radial-gradient(ellipse at bottom, #321b35 0%, #090a0f 100%);
+    background-color: #e8f4fc;
+    background-image: linear-gradient(180deg, #d6ecf8 0%, #e8f4fc 45%, #ffffff 100%);
   }
 
   .mesh-sky-fixed {
@@ -152,11 +131,22 @@ html[lang='fr'] .text-body {
   font-family: 'Inter', sans-serif;
 }
 
+/* Labels and titles on white cards must stay black for contrast */
+.glass-card,
+.glass-surface {
+  color: #000000;
+}
+
+.glass-card label,
+.glass-surface label {
+  color: #000000 !important;
+}
+
 /* Web-only form polish */
 .glass-card input,
 .glass-card textarea {
-  color: #090f20 !important;
-  -webkit-text-fill-color: #090f20;
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000;
   caret-color: #0066ff;
   background-color: #ffffff !important;
   border: 1px solid #e8eef8 !important;

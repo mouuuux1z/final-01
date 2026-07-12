@@ -2,9 +2,9 @@ import Constants from 'expo-constants';
 
 const extra = Constants.expoConfig?.extra ?? {};
 
-export const PRODUCTION_HOST = '0012-production.up.railway.app';
-export const PRODUCTION_API_URL = `https://${PRODUCTION_HOST}/api`;
-export const PRODUCTION_SOCKET_URL = `https://${PRODUCTION_HOST}`;
+export const PRODUCTION_HOST = '197.140.142.178';
+export const PRODUCTION_API_URL = `http://${PRODUCTION_HOST}/api`;
+export const PRODUCTION_SOCKET_URL = `http://${PRODUCTION_HOST}`;
 
 export const API_URL =
   process.env.EXPO_PUBLIC_API_URL ??

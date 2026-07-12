@@ -24,8 +24,9 @@ export function Input({
   const onSky = tone === 'onSky';
   const typography = useTypography();
 
-  const labelColor = isGlass ? UI.text.onPrimary : onSky ? UI.onBackground : UI.text.primary;
-  const fieldTextColor = isGlass ? UI.text.onPrimary : UI.text.primary;
+  // Labels on white cards must stay solid black so they remain readable.
+  const labelColor = isGlass ? UI.text.onPrimary : onSky ? UI.onBackground : '#000000';
+  const fieldTextColor = isGlass ? UI.text.onPrimary : '#000000';
   const fieldBackground = isGlass ? 'rgba(255, 255, 255, 0.12)' : UI.surface;
   const fieldBorderColor = error ? UI.danger : isGlass ? 'rgba(255, 255, 255, 0.35)' : UI.border;
 

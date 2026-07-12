@@ -12,7 +12,7 @@ import { UI, cardShadowStyle } from '../../theme/ui';
 import { useTypography } from '../../hooks/useTypography';
 import { api, getApiErrorMessage } from '../../services/api';
 import { showAlert } from '../../utils/alert';
-import { formatAppointmentDate, getAppointmentDateTime, isAppointmentPast, isAppointmentUpcoming, isTerminalAppointmentStatus } from '../../utils/appointmentHelpers';
+import { formatAppointmentDate, getAppointmentDateTime, isAppointmentPast, isAppointmentUpcoming, isTerminalAppointmentStatus, toDateInputValue } from '../../utils/appointmentHelpers';
 import type { ApiResponse, Appointment, PaginatedResponse } from '../../types';
 import type { PatientStackParamList, PatientTabParamList } from '../../navigation/PatientTabs';
 import { useAuthStore } from '../../store/authStore';
@@ -36,25 +36,51 @@ export function AppointmentsScreen(_props: Props) {
   const patientId = useAuthStore((s) => s.user?.id);
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
-    queryKey: ['appointments', tab],
+  const today = toDateInputValue();
+
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
+    queryKey: ['appointments', tab, today],
     queryFn: async () => {
-      const { data: response } = await api.get<ApiResponse<PaginatedResponse<Appointment>>>('/appointments', { params: { limit: 50 } });
-      const items = response.data.items;
       const now = new Date();
+      const params =
+        tab === 'upcoming'
+          ? { statuses: 'PENDING,CONFIRMED', from: today, sort: 'asc', limit: 30, page: 1 }
+          : {
+              statuses: 'COMPLETED,CANCELLED,NO_SHOW,REJECTED,PENDING,CONFIRMED',
+              sort: 'desc',
+              limit: 40,
+              page: 1,
+            };
+
+      const { data: response } = await api.get<ApiResponse<PaginatedResponse<Appointment>>>('/appointments', {
+        params,
+      });
+      const items = response.data?.items ?? [];
+
       if (tab === 'upcoming') {
         return items
-          .filter((a) => ['PENDING', 'CONFIRMED'].includes(a.status) && isAppointmentUpcoming(a.date, a.time, now))
-          .sort((a, b) => getAppointmentDateTime(a.date, a.time).getTime() - getAppointmentDateTime(b.date, b.time).getTime());
+          .filter((appointment) => isAppointmentUpcoming(appointment.date, appointment.time, now))
+          .sort(
+            (a, b) =>
+              getAppointmentDateTime(a.date, a.time).getTime() - getAppointmentDateTime(b.date, b.time).getTime(),
+          );
       }
+
       return items
-        .filter((a) => {
-          if (isTerminalAppointmentStatus(a.status)) return true;
-          if (['PENDING', 'CONFIRMED'].includes(a.status)) return !isAppointmentUpcoming(a.date, a.time, now);
-          return getAppointmentDateTime(a.date, a.time) < now;
+        .filter((appointment) => {
+          if (isTerminalAppointmentStatus(appointment.status)) return true;
+          if (['PENDING', 'CONFIRMED'].includes(appointment.status)) {
+            return !isAppointmentUpcoming(appointment.date, appointment.time, now);
+          }
+          return getAppointmentDateTime(appointment.date, appointment.time) < now;
         })
-        .sort((a, b) => getAppointmentDateTime(b.date, b.time).getTime() - getAppointmentDateTime(a.date, a.time).getTime());
+        .sort(
+          (a, b) =>
+            getAppointmentDateTime(b.date, b.time).getTime() - getAppointmentDateTime(a.date, a.time).getTime(),
+        );
     },
+    retry: 1,
+    staleTime: 60_000,
   });
 
   const cancelMutation = useMutation({
@@ -71,7 +97,7 @@ export function AppointmentsScreen(_props: Props) {
   return (
     <ScreenShell scroll={false}>
       <Text
-        className="mb-6 text-2xl text-heading"
+        className="mb-6 text-2xl text-on-sky"
         style={{ fontFamily: typography.fontFamily, fontWeight: typography.headingWeight }}
       >
         {t('appointments.title')}
@@ -96,15 +122,28 @@ export function AppointmentsScreen(_props: Props) {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator className="mt-10" color={UI.primary} />
+        <View className="mt-10 items-center">
+          <ActivityIndicator color={UI.primary} />
+          <Text className="mt-3 text-sm text-on-sky-muted">{t('common.loading')}</Text>
+        </View>
+      ) : isError ? (
+        <View className="mt-10 items-center rounded-card bg-white p-8" style={{ borderColor: UI.border, borderWidth: 1 }}>
+          <Text className="mb-3 text-center" style={{ color: UI.text.secondary }}>
+            {t('common.error')}
+          </Text>
+          <Pressable onPress={() => void refetch()} className="rounded-pill px-4 py-2" style={{ backgroundColor: UI.primary }}>
+            <Text className="text-sm font-semibold text-white">{t('common.retry')}</Text>
+          </Pressable>
+        </View>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
           data={data ?? []}
           keyExtractor={(item) => item.id}
           refreshing={isRefetching}
           onRefresh={() => void refetch()}
           showsVerticalScrollIndicator={false}
-          contentContainerClassName="pb-6"
+          contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
           ListEmptyComponent={
             <View className="mt-10 items-center rounded-card bg-white p-8" style={{ borderColor: UI.border, borderWidth: 1 }}>
               <AppIcon name="calendar" size={32} color={UI.text.muted} strokeWidth={1.75} />
@@ -112,7 +151,8 @@ export function AppointmentsScreen(_props: Props) {
             </View>
           }
           renderItem={({ item }) => {
-            const status = STATUS_STYLE[item.status] ?? STATUS_STYLE.COMPLETED;
+            const statusKey = (item.status ?? 'COMPLETED').toUpperCase();
+            const status = STATUS_STYLE[statusKey] ?? STATUS_STYLE.COMPLETED;
             const awaitingDoctorConfirmation =
               ['PENDING', 'CONFIRMED'].includes(item.status) &&
               (item.attendanceStatus === 'PENDING' || item.attendanceStatus === 'LATE') &&
@@ -133,7 +173,9 @@ export function AppointmentsScreen(_props: Props) {
                     </Text>
                     <View className="mt-2 self-start rounded-full px-3 py-1" style={{ backgroundColor: status.bg }}>
                       <Text className="text-xs font-semibold" style={{ color: status.text }}>
-                        {t(`common.${item.status.toLowerCase()}` as 'common.pending', { defaultValue: item.status })}
+                        {t(`common.${statusKey.toLowerCase()}` as 'common.pending', {
+                          defaultValue: item.status ?? statusKey,
+                        })}
                       </Text>
                     </View>
                     {awaitingDoctorConfirmation ? (
@@ -146,7 +188,7 @@ export function AppointmentsScreen(_props: Props) {
                   </View>
                 </View>
                 <View className="mt-3 flex-row items-center justify-end gap-2 border-t pt-3" style={{ borderColor: UI.border }}>
-                  {['PENDING', 'CONFIRMED'].includes(item.status) ? (
+                  {['PENDING', 'CONFIRMED'].includes(statusKey) ? (
                     <Pressable
                       onPress={() => navigation.navigate('BookingReceipt', { appointmentId: item.id })}
                       className="rounded-lg px-3 py-1.5 active:opacity-80"
@@ -157,7 +199,7 @@ export function AppointmentsScreen(_props: Props) {
                       </Text>
                     </Pressable>
                   ) : null}
-                  {item.doctor?.id && ['CONFIRMED', 'COMPLETED'].includes(item.status) ? (
+                  {item.doctor?.id && ['CONFIRMED', 'COMPLETED'].includes(statusKey) ? (
                     <Pressable
                       onPress={() => openChat(item.doctor!.id, item.doctor!.name ?? t('chat.doctor'))}
                       className="h-9 w-9 items-center justify-center rounded-lg active:opacity-80"
@@ -166,17 +208,17 @@ export function AppointmentsScreen(_props: Props) {
                       <AppIcon name="messages" size={18} color={UI.primary} strokeWidth={2.25} />
                     </Pressable>
                   ) : null}
-                  {['PENDING', 'CONFIRMED'].includes(item.status) ? (
+                  {['PENDING', 'CONFIRMED'].includes(statusKey) ? (
                     <Pressable onPress={() => cancelMutation.mutate(item.id)} className="rounded-lg px-3 py-1.5 active:opacity-80" style={{ backgroundColor: '#FEF2F2' }}>
                       <Text className="text-sm font-semibold text-red-600">{t('appointments.cancelAppointment')}</Text>
                     </Pressable>
                   ) : null}
                 </View>
-                {item.status === 'COMPLETED' && item.doctor?.id ? (
+                {statusKey === 'COMPLETED' && item.doctor?.id ? (
                   <AppointmentRatingPrompt
                     doctorId={item.doctor.id}
                     doctorName={item.doctor.name ?? t('chat.doctor')}
-                    variant="card"
+                    variant="button"
                   />
                 ) : null}
               </View>

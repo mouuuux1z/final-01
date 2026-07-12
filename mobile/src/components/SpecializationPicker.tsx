@@ -9,6 +9,7 @@ interface SpecializationPickerProps {
   onChange: (value: string) => void;
   error?: string;
   label?: string;
+  tone?: 'default' | 'onSky';
 }
 
 export function SpecializationPicker({
@@ -16,12 +17,14 @@ export function SpecializationPicker({
   onChange,
   error,
   label,
+  tone = 'default',
 }: SpecializationPickerProps) {
   const { t } = useTranslation();
+  const labelColor = tone === 'onSky' ? UI.onBackground : '#000000';
 
   return (
     <View className="mb-4">
-      <Text className="mb-2 text-sm font-medium" style={{ color: UI.text.secondary }}>
+      <Text className="mb-2 text-sm font-medium" style={{ color: labelColor }}>
         {label ?? t('auth.specialization')}
       </Text>
       <View className="flex-row flex-wrap gap-2">

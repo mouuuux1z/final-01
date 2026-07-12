@@ -41,12 +41,14 @@ export function ProfileScreen(_props: Props) {
   const isBookingBlocked = user?.bookingBlockedUntil != null && new Date(user.bookingBlockedUntil) > new Date();
 
   useEffect(() => {
-    void fetchProfile();
-  }, [fetchProfile]);
+    if (!user?.id) {
+      void fetchProfile();
+    }
+  }, [fetchProfile, user?.id]);
 
   return (
     <ScreenShell contentContainerClassName="pb-6">
-      <Text className="mb-5 text-2xl font-bold" style={{ color: UI.text.primary }}>{t('tabs.myAccount')}</Text>
+      <Text className="mb-5 text-2xl font-bold text-on-sky">{t('tabs.myAccount')}</Text>
 
       <ProfileCard className="items-center">
         <View className="mb-3 h-16 w-16 items-center justify-center rounded-full" style={{ backgroundColor: UI.primaryLight }}>

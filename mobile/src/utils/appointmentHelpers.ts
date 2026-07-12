@@ -139,6 +139,8 @@ export function toDateInputValue(date: Date = new Date()): string {
 }
 
 export function getAppointmentDateKey(dateStr: string): string {
+  if (!dateStr) return '';
+
   const dateOnlyMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
   if (dateOnlyMatch) return dateOnlyMatch[1];
 
@@ -154,9 +156,10 @@ export function getAppointmentDateKey(dateStr: string): string {
 
 export function getAppointmentDateTime(dateStr: string, time: string): Date {
   const dateKey = getAppointmentDateKey(dateStr);
-  const date = parseLocalDateKey(dateKey);
-  const [hours, minutes] = time.split(':').map(Number);
-  date.setHours(hours, minutes, 0, 0);
+  const date = parseLocalDateKey(dateKey || toDateInputValue());
+  const safeTime = typeof time === 'string' && /^\d{1,2}:\d{2}/.test(time) ? time : '00:00';
+  const [hours, minutes] = safeTime.split(':').map(Number);
+  date.setHours(Number.isFinite(hours) ? hours : 0, Number.isFinite(minutes) ? minutes : 0, 0, 0);
   return date;
 }
 

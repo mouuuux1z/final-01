@@ -165,10 +165,10 @@ export function EditAccountScreen() {
       <ScrollView contentContainerClassName="pb-10" showsVerticalScrollIndicator={false}>
         <View className="px-6 pt-14">
           <BackButton onPress={() => navigation.goBack()} />
-          <Text className="text-2xl font-bold" style={{ color: UI.text.primary }}>
+          <Text className="text-2xl font-bold text-on-sky">
             {title}
           </Text>
-          <Text className="mt-1 text-sm" style={{ color: UI.text.secondary }}>
+          <Text className="mt-1 text-sm text-on-sky-muted">
             {t('profile.editAccountHint')}
           </Text>
         </View>
@@ -178,6 +178,7 @@ export function EditAccountScreen() {
 
           <Input
             label={t('auth.name')}
+            tone="onSky"
             value={name}
             onChangeText={(value) => {
               setName(value);
@@ -185,12 +186,13 @@ export function EditAccountScreen() {
             }}
             error={fieldErrors.name}
           />
-          <Input label={t('auth.email')} value={email} editable={false} />
-          <Text className="-mt-2 mb-4 text-xs" style={{ color: UI.text.muted }}>
+          <Input label={t('auth.email')} tone="onSky" value={email} editable={false} />
+          <Text className="-mt-2 mb-4 text-xs text-on-sky-muted">
             {t('profile.emailReadOnly')}
           </Text>
           <Input
             label={t('auth.phone')}
+            tone="onSky"
             value={phone}
             onChangeText={(value) => {
               setPhone(value);
@@ -205,6 +207,7 @@ export function EditAccountScreen() {
             <>
               <SpecializationPicker
                 value={specialization}
+                tone="onSky"
                 onChange={(value) => {
                   setSpecialization(value);
                   clearFieldError('specialization');
@@ -213,6 +216,7 @@ export function EditAccountScreen() {
               />
               <Input
                 label={t('auth.city')}
+                tone="onSky"
                 value={city}
                 onChangeText={(value) => {
                   setCity(value);
@@ -222,6 +226,7 @@ export function EditAccountScreen() {
               />
               <Input
                 label={t('doctor.location')}
+                tone="onSky"
                 value={location}
                 onChangeText={(value) => {
                   setLocation(value);
@@ -231,6 +236,7 @@ export function EditAccountScreen() {
               />
               <Input
                 label={t('profile.clinicInfo')}
+                tone="onSky"
                 value={clinicInfo}
                 onChangeText={setClinicInfo}
                 multiline
@@ -238,6 +244,7 @@ export function EditAccountScreen() {
               />
               <Input
                 label={t('doctor.about')}
+                tone="onSky"
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -250,6 +257,7 @@ export function EditAccountScreen() {
             <>
               <Input
                 label={t('clinic.location')}
+                tone="onSky"
                 value={location}
                 onChangeText={(value) => {
                   setLocation(value);
@@ -259,6 +267,7 @@ export function EditAccountScreen() {
               />
               <Input
                 label={t('auth.city')}
+                tone="onSky"
                 value={city}
                 onChangeText={(value) => {
                   setCity(value);
@@ -268,6 +277,7 @@ export function EditAccountScreen() {
               />
               <SpecializationPicker
                 value={specialization}
+                tone="onSky"
                 onChange={(value) => {
                   setSpecialization(value);
                   clearFieldError('specialization');

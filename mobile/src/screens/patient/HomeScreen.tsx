@@ -26,10 +26,12 @@ export function HomeScreen({ navigation }: Props) {
     queryKey: ['doctors', 'home'],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<PaginatedResponse<Doctor>>>('/doctors', {
-        params: { limit: 100 },
+        params: { limit: 20 },
       });
-      return data.data.items.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+      return (data.data?.items ?? []).sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
     },
+    staleTime: 120_000,
+    retry: 1,
   });
 
   const topDoctors = doctors ?? [];

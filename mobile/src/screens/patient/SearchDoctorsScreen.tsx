@@ -10,6 +10,7 @@ import { Input } from '../../components/Input';
 import { CategoryChip, CategoryChipRow } from '../../components/ui/MedFinderCards';
 import { ScreenShell } from '../../components/ui/ScreenShell';
 import { SPECIALTY_CATEGORIES, getSpecializationFilter, UI } from '../../theme/ui';
+import { useDebounce } from '../../hooks/useDebounce';
 import { api } from '../../services/api';
 import type { ApiResponse, Doctor, PaginatedResponse } from '../../types';
 import type { PatientStackParamList } from '../../navigation/PatientTabs';
@@ -24,7 +25,8 @@ export function SearchDoctorsScreen({ navigation, route }: Props) {
 
   const activeCategory = SPECIALTY_CATEGORIES.find((c) => c.id === category) ?? SPECIALTY_CATEGORIES[0];
   const specializationFilter = getSpecializationFilter(activeCategory.id);
-  const searchQuery = query.trim() || undefined;
+  const debouncedQuery = useDebounce(query.trim(), 400);
+  const searchQuery = debouncedQuery || undefined;
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['doctors', searchQuery, category],
@@ -38,6 +40,8 @@ export function SearchDoctorsScreen({ navigation, route }: Props) {
       });
       return response.data;
     },
+    staleTime: 60_000,
+    retry: 1,
   });
 
   const selectCategory = (categoryId: string) => {
@@ -49,7 +53,7 @@ export function SearchDoctorsScreen({ navigation, route }: Props) {
     <ScreenShell scroll={false} bottomInset={24}>
       <View className="mb-4 flex-row items-center gap-3">
         <BackButton onPress={() => navigation.goBack()} className="mb-0" />
-        <Text className="flex-1 text-xl font-bold" style={{ color: UI.text.primary }}>
+        <Text className="flex-1 text-xl font-bold text-on-sky">
           {t('search.title')}
         </Text>
       </View>
@@ -61,7 +65,7 @@ export function SearchDoctorsScreen({ navigation, route }: Props) {
         className="mb-3 rounded-card"
       />
 
-      <Text className="mb-2 text-sm font-semibold" style={{ color: UI.text.primary }}>
+      <Text className="mb-2 text-sm font-semibold text-on-sky">
         {t('search.filterSpecialty')}
       </Text>
 
@@ -77,14 +81,18 @@ export function SearchDoctorsScreen({ navigation, route }: Props) {
         ))}
       </CategoryChipRow>
 
-      <Text className="mb-3 text-sm" style={{ color: UI.text.secondary }}>
-        {t('search.results', { count: data?.items.length ?? 0 })}
+      <Text className="mb-3 text-sm text-on-sky-muted">
+        {t('search.results', { count: data?.items?.length ?? 0 })}
       </Text>
 
       {isLoading ? (
-        <ActivityIndicator className="mt-10" color={UI.primary} />
+        <View className="mt-10 items-center">
+          <ActivityIndicator color={UI.primary} />
+          <Text className="mt-3 text-sm text-on-sky-muted">{t('common.loading')}</Text>
+        </View>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
           data={data?.items ?? []}
           keyExtractor={(item) => item.id}
           refreshing={isRefetching}

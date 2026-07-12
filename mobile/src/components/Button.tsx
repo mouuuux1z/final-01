@@ -79,6 +79,7 @@ export function Button({
       {...props}
     >
       <Animated.View
+        pointerEvents="none"
         style={[
           {
             flexDirection: 'row',
