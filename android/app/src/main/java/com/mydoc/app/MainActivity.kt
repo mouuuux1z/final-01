@@ -1,4 +1,4 @@
-package com.mydoc.app
+package com.mydoc.appp
 
 import android.os.Build
 import android.os.Bundle

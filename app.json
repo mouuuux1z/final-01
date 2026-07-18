@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mydoc.app",
+      "bundleIdentifier": "com.mydoc.appp",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -24,7 +24,7 @@
         "foregroundImage": "./mobile/assets/android-icon-foreground.png",
         "backgroundColor": "#E8F4FC"
       },
-      "package": "com.mydoc.app",
+      "package": "com.mydoc.appp",
       "versionCode": 2,
       "usesCleartextTraffic": true
     },

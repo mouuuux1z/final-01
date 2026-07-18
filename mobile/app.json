@@ -14,14 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mydoc.app"
+      "bundleIdentifier": "com.mydoc.appp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#E8F4FC"
       },
-      "package": "com.mydoc.app",
+      "package": "com.mydoc.appp",
       "versionCode": 2,
       "usesCleartextTraffic": true
     },

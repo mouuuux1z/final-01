@@ -1,4 +1,4 @@
-package com.mydoc.app
+package com.mydoc.appp
 
 import android.app.Application
 import android.content.res.Configuration
