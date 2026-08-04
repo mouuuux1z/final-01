@@ -75,12 +75,18 @@ const styles = StyleSheet.create({
   sheet: {
     width: '100%',
     maxHeight: SHEET_MAX_HEIGHT,
-    flexShrink: 1,
+    minHeight: Platform.OS === 'android' ? 320 : 200,
     backgroundColor: UI.surface,
     borderTopLeftRadius: UI.radius.card,
     borderTopRightRadius: UI.radius.card,
     overflow: 'hidden',
     flexDirection: 'column',
+    ...(Platform.OS === 'android'
+      ? {
+          elevation: 12,
+          zIndex: 2,
+        }
+      : {}),
     ...(Platform.OS === 'web'
       ? ({
           maxHeight: '90vh',
@@ -92,23 +98,14 @@ const styles = StyleSheet.create({
 
 export const appModalStyles = StyleSheet.create({
   body: {
-    flexGrow: 1,
-    flexShrink: 1,
-    minHeight: 0,
-    ...(Platform.OS === 'web' ? { overflow: 'hidden' } : {}),
+    flex: 1,
+    maxHeight: Platform.OS === 'android' ? SHEET_MAX_HEIGHT * 0.72 : SHEET_MAX_HEIGHT * 0.8,
   },
   scroll: {
-    flexGrow: 1,
-    flexShrink: 1,
-    minHeight: 0,
-    ...(Platform.OS === 'web'
-      ? {
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-        }
-      : {}),
+    flex: 1,
   },
   scrollContent: {
     paddingBottom: 32,
+    flexGrow: 1,
   },
 });

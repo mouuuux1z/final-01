@@ -1,11 +1,17 @@
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { AppLoader } from '../../components/AppLoader';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { AppIcon } from '../../components/AppIcon';
+import {
+  AppointmentNumberBadge,
+  formatAppointmentNumberLabel,
+  hasAppointmentNumber,
+} from '../../components/appointments/AppointmentNumberBadge';
 import { AppointmentRatingPrompt } from '../../components/ratings/AppointmentRatingPrompt';
 import { ScreenShell } from '../../components/ui/ScreenShell';
 import { UI, cardShadowStyle } from '../../theme/ui';
@@ -123,7 +129,7 @@ export function AppointmentsScreen(_props: Props) {
 
       {isLoading ? (
         <View className="mt-10 items-center">
-          <ActivityIndicator color={UI.primary} />
+          <AppLoader color={UI.primary} />
           <Text className="mt-3 text-sm text-on-sky-muted">{t('common.loading')}</Text>
         </View>
       ) : isError ? (
@@ -168,9 +174,19 @@ export function AppointmentsScreen(_props: Props) {
                   </View>
                   <View className="flex-1">
                     <Text className="text-base font-bold" style={{ color: UI.text.primary }}>{item.doctor?.name ?? 'Doctor'}</Text>
-                    <Text className="mt-0.5 text-sm" style={{ color: UI.text.secondary }}>
-                      {formatAppointmentDate(item.date, i18n.language)} · {item.time}
-                    </Text>
+                    <View
+                      className="mt-0.5 flex-row flex-wrap items-center gap-2"
+                    >
+                      {hasAppointmentNumber(item.queueNumber) ? (
+                        <AppointmentNumberBadge number={item.queueNumber} />
+                      ) : null}
+                      <Text className="text-sm" style={{ color: UI.text.secondary }}>
+                        {formatAppointmentDate(item.date, i18n.language)} · {item.time}
+                        {hasAppointmentNumber(item.queueNumber)
+                          ? ` · ${formatAppointmentNumberLabel(item.queueNumber, t)}`
+                          : ''}
+                      </Text>
+                    </View>
                     <View className="mt-2 self-start rounded-full px-3 py-1" style={{ backgroundColor: status.bg }}>
                       <Text className="text-xs font-semibold" style={{ color: status.text }}>
                         {t(`common.${statusKey.toLowerCase()}` as 'common.pending', {

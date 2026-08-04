@@ -138,11 +138,14 @@ export interface Appointment {
   patientId?: string | null;
   date: string;
   time: string;
+  endTime?: string | null;
+  isPrivate?: boolean;
   status: AppointmentStatus;
   notes?: string | null;
   patientName?: string | null;
   patientPhone?: string | null;
   attendanceStatus: AttendanceStatus;
+  queueNumber?: number | null;
   createdAt: string;
   doctor?: Pick<Doctor, 'id' | 'name' | 'specialization' | 'phone' | 'city' | 'location' | 'image'>;
   patient?: Pick<PatientUser, 'id' | 'name' | 'email' | 'phone' | 'attendancePoints'>;

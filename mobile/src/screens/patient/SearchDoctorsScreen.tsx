@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, Text, View } from 'react-native';
+import { AppLoader } from '../../components/AppLoader';
+import { FlatList, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -87,7 +88,7 @@ export function SearchDoctorsScreen({ navigation, route }: Props) {
 
       {isLoading ? (
         <View className="mt-10 items-center">
-          <ActivityIndicator color={UI.primary} />
+          <AppLoader color={UI.primary} />
           <Text className="mt-3 text-sm text-on-sky-muted">{t('common.loading')}</Text>
         </View>
       ) : (

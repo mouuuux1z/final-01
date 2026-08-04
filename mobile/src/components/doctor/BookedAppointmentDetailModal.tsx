@@ -13,7 +13,7 @@ interface BookedAppointmentDetailModalProps {
   onClose: () => void;
 }
 
-function InfoRow({ icon, label, value }: { icon: 'profile' | 'phone' | 'messages' | 'calendar' | 'clock'; label: string; value: string }) {
+function InfoRow({ icon, label, value }: { icon: 'profile' | 'phone' | 'messages' | 'calendar' | 'clock' | 'patients'; label: string; value: string }) {
   const { i18n } = useTranslation();
   const isRtl = I18nManager.isRTL || i18n.language === 'ar';
 
@@ -72,6 +72,7 @@ export function BookedAppointmentDetailModal({ visible, appointment, onClose }: 
           style={{ color: UI.text.secondary, textAlign: isRtl ? 'right' : 'left' }}
         >
           {formattedDate} · {appointment.time}
+          {appointment.queueNumber ? ` · ${t('appointments.appointmentNumber', { number: appointment.queueNumber })}` : ''}
         </Text>
       </View>
 
@@ -86,6 +87,13 @@ export function BookedAppointmentDetailModal({ visible, appointment, onClose }: 
               value={formatAppointmentDate(appointment.date, i18n.language)}
             />
             <InfoRow icon="clock" label={t('appointments.time')} value={appointment.time} />
+            {appointment.queueNumber ? (
+              <InfoRow
+                icon="patients"
+                label={t('appointments.appointmentNumberLabel')}
+                value={String(appointment.queueNumber)}
+              />
+            ) : null}
             <View className="mt-2 self-start rounded-full px-3 py-1" style={{ backgroundColor: UI.primaryLight }}>
               <Text className="text-xs font-semibold" style={{ color: UI.primary }}>
                 {t(`common.${appointment.status.toLowerCase()}` as 'common.pending', { defaultValue: appointment.status })}

@@ -6,7 +6,9 @@ import { Button } from '../Button';
 import { Input } from '../Input';
 import { getApiErrorMessage } from '../../services/api';
 import { showAlert } from '../../utils/alert';
-import { getDayChipLabels, getNextLocalDays } from '../../utils/appointmentHelpers';
+import { DateDayPicker } from '../DateDayPicker';
+import { getDayChipLabels, getDayOfWeekFromDateKey, getNextLocalDays } from '../../utils/appointmentHelpers';
+import type { DoctorSchedule } from '../../types';
 
 const DAYS_AHEAD = 7;
 const DEFAULT_DURATION = 30;
@@ -14,6 +16,7 @@ const DEFAULT_DURATION = 30;
 interface GenerateSlotsModalProps {
   visible: boolean;
   onClose: () => void;
+  schedules?: DoctorSchedule[];
   onSubmit: (payload: {
     dates: string[];
     startTime: string;
@@ -44,7 +47,7 @@ function parseOptionalMinutes(value: string): number | undefined {
   return parsed;
 }
 
-export function GenerateSlotsModal({ visible, onClose, onSubmit, loading }: GenerateSlotsModalProps) {
+export function GenerateSlotsModal({ visible, onClose, schedules = [], onSubmit, loading }: GenerateSlotsModalProps) {
   const { t, i18n } = useTranslation();
   const isRtl = I18nManager.isRTL || i18n.language === 'ar';
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
@@ -65,10 +68,28 @@ export function GenerateSlotsModal({ visible, onClose, onSubmit, loading }: Gene
     }
   }, [visible]);
 
+  const scheduleByDay = useMemo(
+    () => new Map(schedules.map((schedule) => [schedule.dayOfWeek, schedule])),
+    [schedules],
+  );
+
+  const applyScheduleTimesForDate = (dateKey: string) => {
+    const dayOfWeek = getDayOfWeekFromDateKey(dateKey);
+    const schedule = scheduleByDay.get(dayOfWeek);
+    if (!schedule) return;
+    setStartTime(schedule.startTime);
+    setEndTime(schedule.endTime);
+  };
+
   const toggleDate = (dateKey: string) => {
-    setSelectedDates((prev) =>
-      prev.includes(dateKey) ? prev.filter((d) => d !== dateKey) : [...prev, dateKey].sort(),
-    );
+    setSelectedDates((prev) => {
+      const isSelected = prev.includes(dateKey);
+      if (isSelected) {
+        return prev.filter((d) => d !== dateKey);
+      }
+      applyScheduleTimesForDate(dateKey);
+      return [...prev, dateKey].sort();
+    });
   };
 
   const selectedDateLabels = useMemo(
@@ -141,6 +162,20 @@ export function GenerateSlotsModal({ visible, onClose, onSubmit, loading }: Gene
           </Pressable>
         </View>
 
+        <Text
+          className="mb-3 text-sm font-semibold text-slate-700"
+          style={{ textAlign: isRtl ? 'right' : 'left' }}
+        >
+          {t('doctor.selectGenerateDates')}
+        </Text>
+        <DateDayPicker
+          className="mb-4"
+          multiSelect
+          dates={upcomingDates}
+          selectedDates={selectedDates}
+          onToggleDate={toggleDate}
+        />
+
         <ScrollView
           style={appModalStyles.scroll}
           contentContainerStyle={appModalStyles.scrollContent}
@@ -148,42 +183,6 @@ export function GenerateSlotsModal({ visible, onClose, onSubmit, loading }: Gene
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
         >
-          <Text
-            className="mb-3 text-sm font-semibold text-slate-700"
-            style={{ textAlign: isRtl ? 'right' : 'left' }}
-          >
-            {t('doctor.selectGenerateDates')}
-          </Text>
-          <View className="mb-4 flex-row flex-wrap gap-2">
-            {upcomingDates.map((dateKey) => {
-              const selected = selectedDates.includes(dateKey);
-              const labels = getDayChipLabels(dateKey, t, i18n.language);
-              return (
-                <Pressable
-                  key={dateKey}
-                  onPress={() => toggleDate(dateKey)}
-                  className={`min-w-[88px] rounded-card border px-3 py-2.5 ${selected ? 'border-primary bg-primary' : 'border-slate-200 bg-white'}`}
-                >
-                  <Text
-                    className={`text-center text-xs font-semibold ${selected ? 'text-blue-100' : 'text-slate-600'}`}
-                  >
-                    {labels.weekday}
-                  </Text>
-                  <Text
-                    className={`text-center text-lg font-bold ${selected ? 'text-white' : 'text-slate-900'}`}
-                  >
-                    {labels.dayNumber}
-                  </Text>
-                  <Text
-                    className={`text-center text-[10px] font-medium ${selected ? 'text-blue-100' : 'text-slate-400'}`}
-                  >
-                    {labels.month}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
           <View className="flex-row gap-3">
             <View className="flex-1">
               <Input label={t('doctor.workStart')} value={startTime} onChangeText={setStartTime} placeholder="08:00" />

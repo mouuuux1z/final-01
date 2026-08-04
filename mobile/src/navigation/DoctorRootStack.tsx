@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { DoctorTabs } from './DoctorTabs';
+import { DoctorLiveQueueScreen } from '../screens/doctor/DoctorLiveQueueScreen';
 import { DoctorChatScreen, type DoctorChatScreenParams } from '../screens/doctor/DoctorChatScreen';
 import { EditAccountScreen } from '../screens/shared/EditAccountScreen';
 import { AboutScreen } from '../screens/shared/AboutScreen';
@@ -8,6 +9,7 @@ import { StackSceneLayout } from './StackSceneLayout';
 
 export type DoctorRootStackParamList = {
   MainTabs: undefined;
+  LiveQueue: undefined;
   Chat: DoctorChatScreenParams;
   EditProfile: undefined;
   About: undefined;
@@ -24,6 +26,7 @@ export function DoctorRootStack() {
       )}
     >
       <Stack.Screen name="MainTabs" component={DoctorTabs} options={mainTabsStackScreenOptions} />
+      <Stack.Screen name="LiveQueue" component={DoctorLiveQueueScreen} />
       <Stack.Screen name="Chat" component={DoctorChatScreen} />
       <Stack.Screen name="EditProfile" component={EditAccountScreen} />
       <Stack.Screen name="About" component={AboutScreen} />

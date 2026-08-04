@@ -1,21 +1,21 @@
-import { ActivityIndicator, FlatList, Text, View } from 'react-native';
-import { useState } from 'react';
+import { FlatList, Text, View } from 'react-native';
+import { AppLoader } from '../../components/AppLoader';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { Card } from '../../components/Card';
 import { AppointmentCardHeader } from '../../components/AppointmentCardHeader';
 import { AppointmentAttendanceActions } from '../../components/doctor/AppointmentAttendanceActions';
-import { api, getApiErrorMessage } from '../../services/api';
-import { showAlert } from '../../utils/alert';
+import { useDoctorAttendanceMutation } from '../../hooks/useDoctorAttendanceMutation';
+import { api } from '../../services/api';
 import {
   attendanceColor,
   attendanceLabelKey,
   isDoctorQueueAppointment,
 } from '../../utils/appointmentHelpers';
-import type { ApiResponse, Appointment, AttendanceStatus, PaginatedResponse } from '../../types';
+import type { ApiResponse, Appointment, PaginatedResponse } from '../../types';
 import type { DoctorTabParamList } from '../../navigation/DoctorTabs';
 import type { DoctorRootStackParamList } from '../../navigation/DoctorRootStack';
 import { UI } from '../../theme/ui';
@@ -24,9 +24,8 @@ type Props = BottomTabScreenProps<DoctorTabParamList, 'Appointments'>;
 
 export function DoctorAppointmentsScreen(_props: Props) {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const rootNavigation = useNavigation<NativeStackNavigationProp<DoctorRootStackParamList>>();
-  const [markingId, setMarkingId] = useState<string | null>(null);
+  const { mutation: attendanceMutation, markingId } = useDoctorAttendanceMutation();
 
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['appointments', 'doctor'],
@@ -36,24 +35,12 @@ export function DoctorAppointmentsScreen(_props: Props) {
       });
       return response.data?.items ?? [];
     },
+    select: (items) => items.filter(isDoctorQueueAppointment),
     staleTime: 60_000,
     retry: 1,
   });
 
-  const attendanceMutation = useMutation({
-    mutationFn: ({ id, attendanceStatus }: { id: string; attendanceStatus: AttendanceStatus }) =>
-      api.patch(`/appointments/${id}/attendance`, { attendanceStatus }),
-    onMutate: ({ id }) => setMarkingId(id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['appointments'] });
-    },
-    onError: (error) => showAlert(t('common.error'), getApiErrorMessage(error)),
-    onSettled: () => setMarkingId(null),
-  });
-
-  const queueAppointments = (data ?? []).filter(
-    (item) => !['REJECTED', 'CANCELLED'].includes(item.status) && isDoctorQueueAppointment(item),
-  );
+  const queueAppointments = data ?? [];
 
   return (
     <View className="flex-1 pt-14">
@@ -64,7 +51,7 @@ export function DoctorAppointmentsScreen(_props: Props) {
 
       {isLoading ? (
         <View className="mt-10 items-center">
-          <ActivityIndicator color={UI.primary} />
+          <AppLoader />
           <Text className="mt-3 text-sm text-on-sky-muted">{t('common.loading')}</Text>
         </View>
       ) : isError ? (
@@ -94,7 +81,7 @@ export function DoctorAppointmentsScreen(_props: Props) {
               return (
               <Card className="mb-3">
                 <AppointmentCardHeader
-                  index={index + 1}
+                  queueNumber={item.queueNumber}
                   title={patientName}
                   date={item.date}
                   time={item.time}

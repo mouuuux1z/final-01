@@ -1,4 +1,5 @@
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
+import { AppLoader } from '../AppLoader';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -63,7 +64,7 @@ export function DoctorMessagesPanel({
   const patients = useMemo(() => collectPatients(appointments ?? []), [appointments]);
 
   if (isLoading) {
-    return <ActivityIndicator className="my-10" color={UI.primary} />;
+    return <AppLoader className="my-10" color={UI.primary} />;
   }
 
   if (isError) {

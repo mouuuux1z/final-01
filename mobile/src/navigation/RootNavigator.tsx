@@ -1,10 +1,11 @@
 import { NavigationContainer } from '@react-navigation/native';
-import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { useSocketSync } from '../hooks/useSocketSync';
 import { useAuthStore } from '../store/authStore';
-import { AuthStack } from './AuthStack';
+import { hasCompletedOnboarding } from '../services/onboardingStorage';
+import { AuthStack, type AuthStackParamList } from './AuthStack';
 import { PatientTabs } from './PatientTabs';
 import { DoctorRootStack } from './DoctorRootStack';
 import { ClinicStack } from './ClinicStack';
@@ -17,15 +18,28 @@ export function RootNavigator() {
   const userType = useAuthStore((s) => s.userType);
   const restoreSession = useAuthStore((s) => s.restoreSession);
   const sessionChecked = useRef(false);
+  const [authInitialRoute, setAuthInitialRoute] = useState<keyof AuthStackParamList>('Login');
+  const [authRouteReady, setAuthRouteReady] = useState(false);
 
   useSocketSync();
 
   useEffect(() => {
+    void hasCompletedOnboarding().then((completed) => {
+      setAuthInitialRoute(completed ? 'Login' : 'Onboarding');
+      setAuthRouteReady(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      useAuthStore.getState().setHydrated(true);
+    }
+
     const hydrationTimer = setTimeout(() => {
       if (!useAuthStore.getState().isHydrated) {
         useAuthStore.getState().setHydrated(true);
       }
-    }, 2500);
+    }, Platform.OS === 'web' ? 500 : 2500);
 
     return () => clearTimeout(hydrationTimer);
   }, []);
@@ -42,13 +56,13 @@ export function RootNavigator() {
     void restoreSession();
   }, [isHydrated, restoreSession]);
 
-  if (!isHydrated) {
+  if (!isHydrated || !authRouteReady) {
     return <LoadingScreen />;
   }
 
   const renderApp = () => {
     if (!isAuthenticated) {
-      return <AuthStack />;
+      return <AuthStack initialRouteName={authInitialRoute} />;
     }
 
     switch (userType) {
@@ -61,7 +75,7 @@ export function RootNavigator() {
       case 'ADMIN':
         return <AdminStack />;
       default:
-        return <AuthStack />;
+        return <AuthStack initialRouteName="Login" />;
     }
   };
 

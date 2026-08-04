@@ -8,10 +8,10 @@ import {
 /** Visual identity sourced from backend/prisma/info.json */
 export const FONT_STACKS = {
   arabic: {
-    regular: 'Tajawal_400Regular',
-    medium: 'Tajawal_500Medium',
-    bold: 'Tajawal_700Bold',
-    css: 'Tajawal, sans-serif',
+    regular: 'MadikaArabic_400Regular',
+    medium: 'MadikaArabic_500Medium',
+    bold: 'MadikaArabic_800ExtraBold',
+    css: 'MadikaArabic, sans-serif',
   },
   english: {
     regular: 'Inter_400Regular',
@@ -35,20 +35,21 @@ export function isArabicLanguage(language?: string): boolean {
 
 export function getTypography(language?: string): AppTypography {
   const stack = isArabicLanguage(language) ? FONT_STACKS.arabic : FONT_STACKS.english;
+  const useNamedFontFiles = Platform.OS !== 'web';
 
   return {
     fontFamily: stack.bold,
     fontFamilyMedium: stack.medium,
     fontFamilyRegular: stack.regular,
-    headingWeight: '700',
-    bodyWeight: '400',
+    // Android ignores custom fontFamily when fontWeight is also set on the same Text node.
+    headingWeight: useNamedFontFiles ? 'normal' : '700',
+    bodyWeight: useNamedFontFiles ? 'normal' : '400',
   };
 }
 
-/** Medical light background (image + soft blue fallback). */
+/** Medical app background (soft light blue image + fallback). */
 export const BACKGROUNDS = {
   meshSky: {
-    /** Soft sky blue fallback under the image (kept key for existing imports). */
     primarySkyBlue: '#E8F4FC',
     base: '#E8F4FC',
     purpleGlow: '#D6ECF8',
@@ -175,10 +176,9 @@ export function meshSkySurfaceStyle(fixed = false): ViewStyle {
 
   return {
     backgroundColor: mesh.base,
-    ...(Platform.OS === 'web'
+    ...(Platform.OS === 'web' && fixed
       ? ({
-          backgroundImage: mesh.cssGradient,
-          backgroundAttachment: fixed ? 'fixed' : 'scroll',
+          backgroundAttachment: 'fixed',
         } as ViewStyle)
       : {}),
   };

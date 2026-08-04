@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next';
 import type { DayOfWeek } from '../types';
 import { ATTENDANCE_MARK_GRACE_MINUTES, isActiveQueueAppointment } from '../constants/attendance';
+import { APP_TZ_OFFSET_MINUTES } from '../constants/config';
 
 const JS_DAY_TO_DAY_OF_WEEK: Record<number, DayOfWeek> = {
   0: 'SUNDAY',
@@ -53,6 +54,11 @@ export function getNextLocalDays(count: number, startOffset = 0): string[] {
   }
 
   return days;
+}
+
+export function getDayOfWeekFromDateKey(dateKey: string): DayOfWeek {
+  const date = parseLocalDateKey(dateKey);
+  return JS_DAY_TO_DAY_OF_WEEK[date.getDay()];
 }
 
 export function getDayChipLabels(
@@ -127,6 +133,9 @@ export function isTerminalAppointmentStatus(status: string): boolean {
 export function isDoctorQueueAppointment(
   appointment: { status: string; attendanceStatus: string },
 ): boolean {
+  if (['CANCELLED', 'REJECTED', 'COMPLETED', 'NO_SHOW'].includes(appointment.status)) {
+    return false;
+  }
   if (!isActiveQueueAppointment(appointment.status)) return false;
   return appointment.attendanceStatus === 'PENDING' || appointment.attendanceStatus === 'LATE';
 }
@@ -141,26 +150,72 @@ export function toDateInputValue(date: Date = new Date()): string {
 export function getAppointmentDateKey(dateStr: string): string {
   if (!dateStr) return '';
 
-  const dateOnlyMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
-  if (dateOnlyMatch) return dateOnlyMatch[1];
-
-  const parsed = new Date(dateStr);
-  if (Number.isNaN(parsed.getTime())) {
-    return dateStr.split('T')[0] ?? dateStr;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
   }
 
-  return toDateInputValue(
-    new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 12, 0, 0, 0),
-  );
+  const parsed = new Date(dateStr);
+  if (!Number.isNaN(parsed.getTime())) {
+    const y = parsed.getUTCFullYear();
+    const m = String(parsed.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(parsed.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  const prefixMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})/);
+  return prefixMatch?.[1] ?? dateStr.split('T')[0] ?? dateStr;
+}
+
+function wallClockToUtcDate(
+  year: number,
+  monthIndex: number,
+  day: number,
+  hour: number,
+  minute: number,
+): Date {
+  const utcMs =
+    Date.UTC(year, monthIndex, day, hour, minute, 0, 0) - APP_TZ_OFFSET_MINUTES * 60 * 1000;
+  return new Date(utcMs);
 }
 
 export function getAppointmentDateTime(dateStr: string, time: string): Date {
   const dateKey = getAppointmentDateKey(dateStr);
-  const date = parseLocalDateKey(dateKey || toDateInputValue());
+  const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   const safeTime = typeof time === 'string' && /^\d{1,2}:\d{2}/.test(time) ? time : '00:00';
   const [hours, minutes] = safeTime.split(':').map(Number);
-  date.setHours(Number.isFinite(hours) ? hours : 0, Number.isFinite(minutes) ? minutes : 0, 0, 0);
-  return date;
+  const hour = Number.isFinite(hours) ? hours : 0;
+  const minute = Number.isFinite(minutes) ? minutes : 0;
+
+  if (!match) {
+    const today = toDateInputValue();
+    const fallback = today.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!fallback) {
+      return wallClockToUtcDate(1970, 0, 1, hour, minute);
+    }
+    return wallClockToUtcDate(Number(fallback[1]), Number(fallback[2]) - 1, Number(fallback[3]), hour, minute);
+  }
+
+  return wallClockToUtcDate(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]),
+    hour,
+    minute,
+  );
+}
+
+export function getAppointmentEndDateTime(dateStr: string, startTime: string, endTime?: string | null): Date {
+  if (endTime && /^\d{1,2}:\d{2}/.test(endTime)) {
+    return getAppointmentDateTime(dateStr, endTime);
+  }
+  return getAppointmentDateTime(dateStr, startTime);
+}
+
+export function isAppointmentEnded(
+  appointment: { date: string; time: string; endTime?: string | null },
+  now = new Date(),
+): boolean {
+  return getAppointmentEndDateTime(appointment.date, appointment.time, appointment.endTime) <= now;
 }
 
 export function attendanceLabelKey(

@@ -1,4 +1,5 @@
-import { ActivityIndicator, FlatList, Text, View } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
+import { AppLoader } from '../AppLoader';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -7,6 +8,7 @@ import { Card } from '../Card';
 import { AppointmentCardHeader } from '../AppointmentCardHeader';
 import { ManualBookingModal } from './ManualBookingModal';
 import { AppointmentAttendanceActions } from './AppointmentAttendanceActions';
+import { useDoctorAttendanceMutation } from '../../hooks/useDoctorAttendanceMutation';
 import { getApiErrorMessage } from '../../services/api';
 import { showAlert } from '../../utils/alert';
 import { UI } from '../../theme/ui';
@@ -14,9 +16,10 @@ import {
   attendanceColor,
   attendanceLabelKey,
   getAppointmentDateTime,
+  isDoctorQueueAppointment,
   toDateInputValue,
 } from '../../utils/appointmentHelpers';
-import type { Appointment, AttendanceStatus, DoctorAvailabilitySlot } from '../../types';
+import type { Appointment, DoctorAvailabilitySlot } from '../../types';
 import type { DoctorWorkspaceApi } from '../../services/doctorWorkspaceApi';
 
 interface DoctorAppointmentsPanelProps {
@@ -44,6 +47,7 @@ export function DoctorAppointmentsPanel({
   const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: [...queryKeyPrefix, 'appointments'],
     queryFn: () => workspaceApi.listAppointments({ limit: 100 }),
+    select: (items) => items.filter((item: Appointment) => isDoctorQueueAppointment(item)),
     retry: 1,
   });
 
@@ -70,12 +74,7 @@ export function DoctorAppointmentsPanel({
     void queryClient.invalidateQueries({ queryKey: [...queryKeyPrefix, 'availability'] });
   };
 
-  const attendanceMutation = useMutation({
-    mutationFn: ({ id, attendanceStatus }: { id: string; attendanceStatus: AttendanceStatus }) =>
-      workspaceApi.markAttendance(id, attendanceStatus),
-    onSuccess: invalidate,
-    onError: (error) => showAlert(t('common.error'), getApiErrorMessage(error)),
-  });
+  const { mutation: attendanceMutation, markingId } = useDoctorAttendanceMutation();
 
   const manualBookMutation = useMutation({
     mutationFn: (payload: Parameters<DoctorWorkspaceApi['manualBook']>[0]) => workspaceApi.manualBook(payload),
@@ -87,10 +86,10 @@ export function DoctorAppointmentsPanel({
     onError: (error) => showAlert(t('common.error'), getApiErrorMessage(error)),
   });
 
-  const bookedAppointments = (data ?? []).filter((item: Appointment) => !['REJECTED', 'CANCELLED'].includes(item.status));
+  const bookedAppointments = data ?? [];
 
   if (isLoading) {
-    return <ActivityIndicator className="my-10" color={UI.primary} />;
+    return <AppLoader className="my-10" />;
   }
 
   if (isError) {
@@ -130,7 +129,7 @@ export function DoctorAppointmentsPanel({
           return (
           <Card className="mb-3">
             <AppointmentCardHeader
-              index={index + 1}
+              queueNumber={item.queueNumber}
               title={patientName}
               date={item.date}
               time={item.time}
@@ -153,6 +152,7 @@ export function DoctorAppointmentsPanel({
 
             <AppointmentAttendanceActions
               appointment={item}
+              markingId={markingId}
               onMarkAttendance={(id, attendanceStatus) =>
                 attendanceMutation.mutate({ id, attendanceStatus })
               }

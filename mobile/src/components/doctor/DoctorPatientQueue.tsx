@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { AppLoader } from '../AppLoader';
 import { useTranslation } from 'react-i18next';
 import { AppIcon } from '../AppIcon';
 import {
@@ -36,7 +37,7 @@ export function DoctorPatientQueue({
   if (loading) {
     return (
       <View className="items-center py-10">
-        <ActivityIndicator color={UI.primary} />
+        <AppLoader color={UI.primary} />
       </View>
     );
   }

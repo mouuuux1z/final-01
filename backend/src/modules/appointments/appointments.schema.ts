@@ -24,12 +24,41 @@ export const rescheduleAppointmentSchema = z.object({
   time: z.string().regex(/^\d{2}:\d{2}$/),
 });
 
+export const createPrivateAppointmentSchema = z
+  .object({
+    patientName: z.string().max(100).optional(),
+    patientPhone: z.string().max(20).optional(),
+    patientId: z.string().uuid().optional(),
+    date: z.preprocess(parseLocalDateInput, z.date()),
+    startTime: z.string().regex(/^\d{2}:\d{2}$/),
+    endTime: z.string().regex(/^\d{2}:\d{2}$/),
+    notes: z.string().max(1000).optional(),
+  })
+  .refine((data) => Boolean(data.patientId || data.patientName?.trim()), {
+    message: 'Patient name or patientId is required',
+    path: ['patientName'],
+  });
+
+export const updatePrivateAppointmentSchema = z.object({
+  patientName: z.string().max(100).optional(),
+  patientPhone: z.string().max(20).optional(),
+  patientId: z.string().uuid().optional(),
+  date: z.preprocess(parseLocalDateInput, z.date()),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/),
+  endTime: z.string().regex(/^\d{2}:\d{2}$/),
+  notes: z.string().max(1000).optional(),
+});
+
 export const updateAppointmentStatusSchema = z.object({
   status: z.nativeEnum(AppointmentStatus),
 });
 
 export const updateAttendanceSchema = z.object({
-  attendanceStatus: z.nativeEnum(AttendanceStatus),
+  attendanceStatus: z.enum([
+    AttendanceStatus.ATTENDED,
+    AttendanceStatus.ABSENT,
+    AttendanceStatus.LATE,
+  ]),
 });
 
 export const appointmentIdParamSchema = z.object({
@@ -55,4 +84,5 @@ export const listAppointmentsQuerySchema = z.object({
   from: z.preprocess(parseLocalDateInput, z.date().optional()),
   to: z.preprocess(parseLocalDateInput, z.date().optional()),
   sort: z.enum(['asc', 'desc']).optional(),
+  isPrivate: z.enum(['true', 'false']).optional(),
 });

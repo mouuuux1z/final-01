@@ -9,7 +9,7 @@ import {
 import { prisma } from '../../config/database.js';
 import { AppError } from '../../utils/AppError.js';
 import { buildPaginationMeta, parsePagination } from '../../utils/pagination.js';
-import { getAppointmentDateTime, normalizeDateOnly } from '../../utils/slotGenerator.js';
+import { getAppointmentDateTime, getAppointmentEndDateTime, normalizeDateOnly, parseTimeToMinutes, addMinutesToTime } from '../../utils/slotGenerator.js';
 import { appointmentsRepository } from './appointments.repository.js';
 import { ATTENDANCE_MARK_GRACE_MINUTES } from '../../constants/attendance.js';
 import {
@@ -38,6 +38,8 @@ export class AppointmentsService {
       where: { id: data.doctorId, status: EntityStatus.ACTIVE },
     });
     if (!doctor) throw new AppError('Doctor not available', 404);
+
+    await this.assertNoPrivateSlotConflict(data.doctorId, data.date, data.time);
 
     try {
       const appointment = await appointmentsRepository.create({
@@ -83,12 +85,176 @@ export class AppointmentsService {
       sort: query.sort as 'asc' | 'desc' | undefined,
     };
 
-    if (userType === UserType.PATIENT) filters.patientId = userId;
-    if (userType === UserType.DOCTOR) filters.doctorId = userId;
+    if (userType === UserType.PATIENT) {
+      filters.patientId = userId;
+      filters.isPrivate = false;
+    }
+    if (userType === UserType.DOCTOR) {
+      filters.doctorId = userId;
+      if (query.isPrivate !== undefined) {
+        filters.isPrivate = query.isPrivate === 'true';
+      }
+      await this.finalizeExpiredPrivateAppointments(userId);
+    }
 
     const pagination = parsePagination(query);
     const { items, total } = await appointmentsRepository.findMany(filters, pagination);
     return { items, meta: buildPaginationMeta(pagination.page, pagination.limit, total) };
+  }
+
+  async createPrivateAppointment(
+    doctorId: string,
+    data: {
+      patientName?: string;
+      patientPhone?: string;
+      patientId?: string;
+      date: Date;
+      startTime: string;
+      endTime: string;
+      notes?: string;
+    },
+  ) {
+    const startMin = parseTimeToMinutes(data.startTime);
+    const endMin = parseTimeToMinutes(data.endTime);
+    if (startMin >= endMin) {
+      throw new AppError('وقت النهاية يجب أن يكون بعد وقت البداية', 400);
+    }
+
+    const doctor = await prisma.doctor.findFirst({
+      where: { id: doctorId, status: EntityStatus.ACTIVE },
+    });
+    if (!doctor) throw new AppError('Doctor not available', 404);
+
+    const conflictingPrivate = await appointmentsRepository.findConflictingPrivate(
+      doctorId,
+      data.date,
+      data.startTime,
+      data.endTime,
+    );
+    if (conflictingPrivate) {
+      throw new AppError('يوجد موعد خاص آخر يتداخل مع هذا الوقت', 409);
+    }
+
+    const conflictingRegular = await appointmentsRepository.findConflictingBookedRegular(
+      doctorId,
+      data.date,
+      data.startTime,
+      data.endTime,
+    );
+    if (conflictingRegular) {
+      throw new AppError('يوجد موعد محجوز لمريض في هذه الفترة الزمنية', 409);
+    }
+
+    let patientName = data.patientName;
+    let patientPhone = data.patientPhone;
+    if (data.patientId) {
+      const patient = await prisma.patient.findUnique({ where: { id: data.patientId } });
+      if (!patient) throw new AppError('Patient not found', 404);
+      if (!patientName) patientName = patient.name;
+      if (!patientPhone) patientPhone = patient.phone;
+    } else if (!patientName?.trim()) {
+      throw new AppError('Patient name is required for private appointments', 400);
+    }
+
+    const appointment = await appointmentsRepository.createPrivate({
+      doctorId,
+      patientId: data.patientId,
+      patientName,
+      patientPhone,
+      date: data.date,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      notes: data.notes,
+    });
+
+    emitToUser(UserType.DOCTOR, doctorId, SocketEvents.APPOINTMENT_NEW, appointment);
+    return appointment;
+  }
+
+  async updatePrivateAppointment(
+    id: string,
+    doctorId: string,
+    data: {
+      patientName?: string;
+      patientPhone?: string;
+      patientId?: string;
+      date: Date;
+      startTime: string;
+      endTime: string;
+      notes?: string;
+    },
+  ) {
+    const existing = await appointmentsRepository.findById(id);
+    if (!existing || !existing.isPrivate) {
+      throw new AppError('Appointment not found', 404);
+    }
+    if (existing.doctorId !== doctorId) {
+      throw new AppError('Forbidden', 403);
+    }
+
+    const startMin = parseTimeToMinutes(data.startTime);
+    const endMin = parseTimeToMinutes(data.endTime);
+    if (startMin >= endMin) {
+      throw new AppError('وقت النهاية يجب أن يكون بعد وقت البداية', 400);
+    }
+
+    const conflictingPrivate = await appointmentsRepository.findConflictingPrivate(
+      doctorId,
+      data.date,
+      data.startTime,
+      data.endTime,
+      id,
+    );
+    if (conflictingPrivate) {
+      throw new AppError('يوجد موعد خاص آخر يتداخل مع هذا الوقت', 409);
+    }
+
+    const conflictingRegular = await appointmentsRepository.findConflictingBookedRegular(
+      doctorId,
+      data.date,
+      data.startTime,
+      data.endTime,
+      id,
+    );
+    if (conflictingRegular) {
+      throw new AppError('يوجد موعد محجوز لمريض في هذه الفترة الزمنية', 409);
+    }
+
+    let patientName = data.patientName;
+    let patientPhone = data.patientPhone;
+    if (data.patientId) {
+      const patient = await prisma.patient.findUnique({ where: { id: data.patientId } });
+      if (!patient) throw new AppError('Patient not found', 404);
+      if (!patientName) patientName = patient.name;
+      if (!patientPhone) patientPhone = patient.phone;
+    }
+
+    const updated = await appointmentsRepository.updatePrivate(id, {
+      patientId: data.patientId,
+      patientName,
+      patientPhone,
+      date: data.date,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      notes: data.notes,
+    });
+
+    emitToUser(UserType.DOCTOR, doctorId, SocketEvents.APPOINTMENT_UPDATED, updated);
+    return updated;
+  }
+
+  async deletePrivateAppointment(id: string, doctorId: string) {
+    const existing = await appointmentsRepository.findById(id);
+    if (!existing || !existing.isPrivate) {
+      throw new AppError('Appointment not found', 404);
+    }
+    if (existing.doctorId !== doctorId) {
+      throw new AppError('Forbidden', 403);
+    }
+
+    await appointmentsRepository.deletePrivate(id);
+    emitToUser(UserType.DOCTOR, doctorId, SocketEvents.APPOINTMENT_UPDATED, { id, status: AppointmentStatus.CANCELLED });
+    return { success: true };
   }
 
   async cancel(id: string, userId: string, userType: UserType) {
@@ -106,7 +272,9 @@ export class AppointmentsService {
     try {
       const result = await appointmentsRepository.cancel(id);
       emitToUser(UserType.DOCTOR, appointment.doctorId, SocketEvents.APPOINTMENT_UPDATED, result);
-      emitToUser(UserType.PATIENT, appointment.patientId!, SocketEvents.APPOINTMENT_UPDATED, result);
+      if (appointment.patientId) {
+        emitToUser(UserType.PATIENT, appointment.patientId, SocketEvents.APPOINTMENT_UPDATED, result);
+      }
       return result;
     } catch {
       throw new AppError('Failed to cancel appointment', 400);
@@ -121,6 +289,8 @@ export class AppointmentsService {
     if (appointment.status === AppointmentStatus.CANCELLED) {
       throw new AppError('Cannot reschedule cancelled appointment', 400);
     }
+
+    await this.assertNoPrivateSlotConflict(appointment.doctorId, date, time);
 
     try {
       const result = await appointmentsRepository.reschedule(id, normalizeDateOnly(date), time);
@@ -186,6 +356,8 @@ export class AppointmentsService {
     });
     if (!doctor) throw new AppError('Doctor not available', 404);
 
+    await this.assertNoPrivateSlotConflict(doctorId, data.date, data.time);
+
     try {
       const appointment = await appointmentsRepository.createDoctorManual({
         ...data,
@@ -208,10 +380,13 @@ export class AppointmentsService {
       throw new AppError('Appointment not found', 404);
     }
 
+    if (appointment.isPrivate) {
+      throw new AppError('Attendance cannot be marked for private appointments', 400);
+    }
+
     if (
       appointment.status !== AppointmentStatus.CONFIRMED &&
-      appointment.status !== AppointmentStatus.COMPLETED &&
-      appointment.status !== AppointmentStatus.PENDING
+      appointment.status !== AppointmentStatus.COMPLETED
     ) {
       throw new AppError('Attendance can only be marked for confirmed appointments', 400);
     }
@@ -239,7 +414,10 @@ export class AppointmentsService {
     const result = await appointmentsRepository.updateAttendance(id, attendanceStatus, status);
 
     if (attendanceStatus === AttendanceStatus.ABSENT && appointment.patientId) {
-      await applyNoShowPenalty(appointment.patientId);
+      const penalty = await applyNoShowPenalty(appointment.patientId);
+      if (penalty.blocked) {
+        await this.cancelFutureAppointmentsForBlockedPatient(appointment.patientId, id);
+      }
     }
 
     const refreshed = await appointmentsRepository.findById(id);
@@ -256,14 +434,96 @@ export class AppointmentsService {
     return refreshed ?? result;
   }
 
+  private async finalizeExpiredPrivateAppointments(doctorId: string) {
+    const privates = await prisma.appointment.findMany({
+      where: {
+        doctorId,
+        isPrivate: true,
+        status: { in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
+      },
+      select: { id: true, date: true, time: true, endTime: true },
+    });
+
+    const now = new Date();
+    const expiredIds = privates
+      .filter((item) => getAppointmentEndDateTime(new Date(item.date), item.time, item.endTime) <= now)
+      .map((item) => item.id);
+
+    if (expiredIds.length === 0) return;
+
+    await prisma.appointment.updateMany({
+      where: { id: { in: expiredIds } },
+      data: { status: AppointmentStatus.COMPLETED },
+    });
+  }
+
+  async cancelFutureAppointmentsForBlockedPatient(patientId: string, excludeAppointmentId?: string) {
+    const now = new Date();
+    const candidates = await appointmentsRepository.findActiveByPatient(patientId, excludeAppointmentId);
+    const upcoming = candidates.filter(
+      (item) => getAppointmentDateTime(new Date(item.date), item.time) > now,
+    );
+
+    if (upcoming.length === 0) {
+      return [];
+    }
+
+    const cancelled = [];
+    for (const item of upcoming) {
+      try {
+        const result = await appointmentsRepository.cancel(item.id);
+        cancelled.push(result);
+        emitToUser(UserType.DOCTOR, item.doctorId, SocketEvents.APPOINTMENT_UPDATED, result);
+        emitToUser(UserType.PATIENT, patientId, SocketEvents.APPOINTMENT_UPDATED, result);
+      } catch {
+        // Skip appointments that cannot be cancelled.
+      }
+    }
+
+    if (cancelled.length > 0) {
+      await prisma.notification.create({
+        data: {
+          targetType: NotificationTargetType.PATIENT,
+          targetId: patientId,
+          title: 'Future appointments cancelled',
+          message: `${cancelled.length} upcoming appointment(s) were cancelled because your booking access was suspended.`,
+          type: NotificationType.APPOINTMENT,
+        },
+      });
+    }
+
+    return cancelled;
+  }
+
+  private async assertNoPrivateSlotConflict(doctorId: string, date: Date, time: string) {
+    const normalizedDate = normalizeDateOnly(date);
+    const slotDuration = await appointmentsRepository.resolveSlotDurationMinutes(
+      doctorId,
+      normalizedDate,
+      time,
+    );
+    const endTime = addMinutesToTime(time, slotDuration);
+    const conflictingPrivate = await appointmentsRepository.findConflictingPrivate(
+      doctorId,
+      normalizedDate,
+      time,
+      endTime,
+    );
+    if (conflictingPrivate) {
+      throw new AppError('Selected time slot is not available', 409);
+    }
+  }
+
   private assertAccess(
-    appointment: { patientId: string | null; doctorId: string },
+    appointment: { patientId: string | null; doctorId: string; isPrivate?: boolean },
     userId: string,
     userType: UserType,
   ) {
     if (userType === UserType.ADMIN) return;
-    if (userType === UserType.PATIENT && appointment.patientId !== userId) {
-      throw new AppError('Forbidden', 403);
+    if (userType === UserType.PATIENT) {
+      if (appointment.isPrivate || appointment.patientId !== userId) {
+        throw new AppError('Forbidden', 403);
+      }
     }
     if (userType === UserType.DOCTOR && appointment.doctorId !== userId) {
       throw new AppError('Forbidden', 403);

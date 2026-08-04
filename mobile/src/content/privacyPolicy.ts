@@ -30,7 +30,7 @@ const PRIVACY_POLICY_AR: PrivacyPolicyDocument = {
       title: '2. المدفوعات والتحويلات المالية',
       paragraphs: [
         'نود التوضيح أن تطبيقنا لا يعالج أي عمليات دفع مباشرة داخل التطبيق. في حال كانت الخدمة التي نقدمها مدفوعة، يتم التحويل المالي مباشرة إلى حسابنا البنكي الخاص خارج نطاق التطبيق.',
-        'نحن لا نطلب من المستخدمين مشاركة أي تفاصيل بنكية أو معلومات دفع حساسة داخل التطبيق. يرجى الحذر من مشاركة بياناتك المالية في أي مراسلات.',
+        'نحن لا نطلب من المستخدمين مشاركة أي تفاصيل بنكية أو معلومات دفع حساسة داخل التطبيق، يرجى الحذر من مشاركة بياناتك المالية في أي مراسلات.',
       ],
     },
     {
@@ -40,25 +40,31 @@ const PRIVACY_POLICY_AR: PrivacyPolicyDocument = {
       ],
     },
     {
-      title: '4. أمن البيانات',
+      title: '4. الاحتفاظ بالبيانات (Data Retention)',
+      paragraphs: [
+        'نحتفظ بالبريد الإلكتروني الخاص بك طالما أن حسابك نشط أو طالما كان ذلك ضرورياً لتقديم الخدمات وتلبية الأغراض الموضحة في هذه السياسة. عندما لا نعود بحاجة إلى بياناتك، نقوم بحذفها أو إخفاء هويتها بشكل آمن.',
+      ],
+    },
+    {
+      title: '5. أمن البيانات',
       paragraphs: [
         'نحن نتخذ تدابير أمنية تقنية لحماية بياناتك من الوصول غير المصرح به أو التغيير أو الإتلاف. ورغم ذلك، نذكرك بأن نقل البيانات عبر الإنترنت لا يمكن أن يكون آمناً بنسبة 100%.',
       ],
     },
     {
-      title: '5. حقوق المستخدم',
+      title: '6. حقوق المستخدم',
       paragraphs: [
         'لديك الحق في طلب الوصول إلى بياناتك المسجلة لدينا، أو طلب تصحيحها، أو حذفها نهائياً من سجلاتنا. يمكنك القيام بذلك عبر مراسلتنا على البريد الإلكتروني الموضح أدناه.',
       ],
     },
     {
-      title: '6. التغييرات على السياسة',
+      title: '7. التغييرات على السياسة',
       paragraphs: [
         'نحتفظ بالحق في تحديث سياسة الخصوصية هذه من وقت لآخر. سيتم إخطاركم بأي تغييرات جوهرية عبر التطبيق أو عبر البريد الإلكتروني الخاص بكم.',
       ],
     },
   ],
-  contactHeading: '7. اتصل بنا',
+  contactHeading: '8. اتصل بنا',
   contactEmail: 'mydoc2contact@gmail.com',
 };
 
@@ -89,25 +95,31 @@ const PRIVACY_POLICY_EN: PrivacyPolicyDocument = {
       ],
     },
     {
-      title: '4. Data Security',
+      title: '4. Data Retention',
+      paragraphs: [
+        'We retain your email address for as long as your account is active or as long as necessary to provide services and fulfill the purposes outlined in this policy. When we no longer need your data, we delete it or anonymize it securely.',
+      ],
+    },
+    {
+      title: '5. Data Security',
       paragraphs: [
         'We implement technical security measures to protect your data from unauthorized access, alteration, or destruction. However, data transmission over the internet cannot be 100% secure.',
       ],
     },
     {
-      title: '5. User Rights',
+      title: '6. User Rights',
       paragraphs: [
         'You have the right to request access to your stored data, request correction, or permanent deletion from our records. You may do so by contacting us at the email below.',
       ],
     },
     {
-      title: '6. Policy Changes',
+      title: '7. Policy Changes',
       paragraphs: [
         'We reserve the right to update this privacy policy from time to time. Material changes will be communicated through the app or via your registered email.',
       ],
     },
   ],
-  contactHeading: '7. Contact Us',
+  contactHeading: '8. Contact Us',
   contactEmail: 'mydoc2contact@gmail.com',
 };
 

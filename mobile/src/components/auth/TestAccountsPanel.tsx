@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { AppLoader } from '../AppLoader';
 import { useTranslation } from 'react-i18next';
 import { AppIcon } from '../AppIcon';
 import { DEMO_ACCOUNTS, TEST_PASSWORD } from '../../constants/testAccounts';
@@ -49,7 +50,7 @@ export function TestAccountsPanel({ loading, onSelect }: TestAccountsPanelProps)
               </Text>
             </View>
             {loading ? (
-              <ActivityIndicator size="small" color={UI.primary} />
+              <AppLoader size="small" color={UI.primary} />
             ) : (
               <Text className="text-xs font-semibold text-primary">{t('auth.testQuickLogin')}</Text>
             )}

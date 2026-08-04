@@ -1,4 +1,5 @@
 import i18n from '../i18n';
+import { getApiBaseOrigin } from '../constants/config';
 
 export const API_ERROR_MESSAGE_KEYS: Record<string, string> = {
   'Something went wrong': 'errors.api.generic',
@@ -9,7 +10,13 @@ export const API_ERROR_MESSAGE_KEYS: Record<string, string> = {
   'Session expired': 'errors.api.sessionExpired',
   'Invalid session': 'errors.api.invalidSession',
   'Invalid or expired token': 'errors.api.invalidToken',
+  'Invalid or expired reset code': 'errors.api.invalidResetCode',
+  'Email service is not configured': 'errors.api.emailServiceUnavailable',
+  'Failed to send verification email': 'errors.api.emailSendFailed',
+  'Resend testing mode only allows sending to your Resend account email': 'errors.api.resendTestingEmailOnly',
   'Invalid credentials': 'errors.api.invalidCredentials',
+  'Incorrect password': 'errors.api.incorrectPassword',
+  'Account deletion is not allowed': 'errors.api.accountDeletionNotAllowed',
   'Email already registered': 'errors.api.emailAlreadyRegistered',
   'User not found': 'errors.api.userNotFound',
   'Account not active': 'errors.api.accountNotActive',
@@ -38,6 +45,8 @@ export const API_ERROR_MESSAGE_KEYS: Record<string, string> = {
   'Attendance can only be marked for confirmed appointments': 'errors.api.attendanceConfirmedOnly',
   'Attendance has already been recorded': 'errors.api.attendanceAlreadyRecorded',
   'Cannot mark attendance before the appointment time': 'errors.api.attendanceTooEarly',
+  'Attendance cannot be marked for private appointments': 'errors.api.attendancePrivateNotAllowed',
+  'Patient name is required for private appointments': 'errors.api.privatePatientRequired',
   'Schedule already exists for this day': 'errors.api.scheduleExists',
   'Schedule not found': 'errors.api.scheduleNotFound',
   'Slot already exists': 'errors.api.slotExists',
@@ -53,9 +62,14 @@ export const API_ERROR_MESSAGE_KEYS: Record<string, string> = {
   'Request timed out. Check your connection and try again.': 'errors.api.networkTimeout',
   'Cannot reach server. Make sure the backend is running on http://197.140.142.178':
     'errors.api.networkUnreachable',
+  'Route not found': 'errors.api.routeNotFound',
   'Invalid uuid': 'errors.api.invalidUuid',
   'Time must be in HH:MM format': 'errors.api.invalidTimeFormat',
   'End time must be after start time': 'errors.api.endTimeBeforeStart',
+  'يوجد موعد خاص آخر يتداخل مع هذا الوقت': 'doctor.privateConflict',
+  'يوجد موعد محجوز لمريض في هذه الفترة الزمنية': 'doctor.regularConflict',
+  'وقت النهاية يجب أن يكون بعد وقت البداية': 'errors.api.endTimeBeforeStart',
+  'ليس لديك صلاحية للوصول إلى المواعيد الخاصة': 'doctor.privateForbidden',
 };
 
 export function translateApiMessage(message: string): string {
@@ -66,6 +80,9 @@ export function translateApiMessage(message: string): string {
 
   const key = API_ERROR_MESSAGE_KEYS[trimmed];
   if (key) {
+    if (key === 'errors.api.routeNotFound' || key === 'errors.api.networkUnreachable') {
+      return i18n.t(key, { server: getApiBaseOrigin() });
+    }
     return i18n.t(key);
   }
 
@@ -81,5 +98,5 @@ export function getLocalizedNetworkTimeoutMessage(): string {
 }
 
 export function getLocalizedNetworkUnreachableMessage(): string {
-  return i18n.t('errors.api.networkUnreachable');
+  return i18n.t('errors.api.networkUnreachable', { server: getApiBaseOrigin() });
 }

@@ -4,7 +4,7 @@ import { SenderType } from '@prisma/client';
 export const sendMessageSchema = z.object({
   doctorId: z.string().uuid(),
   patientId: z.string().uuid(),
-  message: z.string().min(1).max(5000),
+  message: z.string().max(5000).optional().default(''),
 });
 
 export const conversationQuerySchema = z.object({

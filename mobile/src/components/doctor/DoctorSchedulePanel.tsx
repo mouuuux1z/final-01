@@ -1,16 +1,19 @@
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, I18nManager, Pressable, ScrollView, Text, View } from 'react-native';
+import { I18nManager, Pressable, ScrollView, Text, View } from 'react-native';
+import { AppLoader } from '../AppLoader';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button } from '../Button';
+import { ScheduleActionCard } from './ScheduleActionCard';
 import { GenerateSlotsModal } from './GenerateSlotsModal';
+import { WeeklyScheduleModal } from './WeeklyScheduleModal';
 import { ManualBookingModal } from './ManualBookingModal';
+import { PrivateAppointmentModal } from './PrivateAppointmentModal';
 import { BookedAppointmentDetailModal } from './BookedAppointmentDetailModal';
 import { BookedAppointmentListItem } from './BookedAppointmentListItem';
 import { DaySectionHeader } from './DaySectionHeader';
 import { getApiErrorMessage } from '../../services/api';
 import { confirmAlert, showAlert } from '../../utils/alert';
-import { getAppointmentDateKey, getAppointmentDateTime, toDateInputValue } from '../../utils/appointmentHelpers';
+import { getAppointmentDateKey, getAppointmentDateTime, isAppointmentEnded, toDateInputValue } from '../../utils/appointmentHelpers';
 import { useTypography } from '../../hooks/useTypography';
 import type { Appointment, DoctorAvailabilitySlot, DoctorSchedule } from '../../types';
 import type { DoctorWorkspaceApi } from '../../services/doctorWorkspaceApi';
@@ -21,7 +24,7 @@ interface DoctorSchedulePanelProps {
   queryKeyPrefix: readonly unknown[];
 }
 
-const WEEKS_AHEAD = 8;
+const DAYS_AHEAD = 7;
 
 function groupSlotsByDate(slots: DoctorAvailabilitySlot[]) {
   const grouped = new Map<string, DoctorAvailabilitySlot[]>();
@@ -41,19 +44,47 @@ function groupSlotsByDate(slots: DoctorAvailabilitySlot[]) {
     }));
 }
 
+function groupAppointmentsByDate(appointments: Appointment[], sortDays: 'asc' | 'desc') {
+  const grouped = new Map<string, Appointment[]>();
+
+  for (const appointment of appointments) {
+    const dateKey = getAppointmentDateKey(appointment.date);
+    const existing = grouped.get(dateKey) ?? [];
+    existing.push(appointment);
+    grouped.set(dateKey, existing);
+  }
+
+  return Array.from(grouped.entries())
+    .sort(([left], [right]) => (sortDays === 'desc' ? right.localeCompare(left) : left.localeCompare(right)))
+    .map(([date, dayAppointments]) => ({
+      date,
+      appointments: dayAppointments.sort((a, b) => a.time.localeCompare(b.time)),
+    }));
+}
+
+function isPastBookedAppointment(appointment: Appointment): boolean {
+  if (['CANCELLED', 'REJECTED', 'COMPLETED', 'NO_SHOW'].includes(appointment.status)) {
+    return true;
+  }
+  return isAppointmentEnded(appointment);
+}
+
 export function DoctorSchedulePanel({ workspaceApi, queryKeyPrefix }: DoctorSchedulePanelProps) {
   const { t, i18n } = useTranslation();
   const typography = useTypography();
   const isRtl = I18nManager.isRTL || i18n.language === 'ar';
   const queryClient = useQueryClient();
   const [generateVisible, setGenerateVisible] = useState(false);
+  const [weeklyScheduleVisible, setWeeklyScheduleVisible] = useState(false);
   const [manualBookingVisible, setManualBookingVisible] = useState(false);
+  const [privateModalVisible, setPrivateModalVisible] = useState(false);
+  const [editingPrivateAppt, setEditingPrivateAppt] = useState<Appointment | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   const availabilityRange = useMemo(() => {
     const from = toDateInputValue();
     const end = new Date();
-    end.setDate(end.getDate() + WEEKS_AHEAD * 7);
+    end.setDate(end.getDate() + DAYS_AHEAD);
     return { from, to: toDateInputValue(end) };
   }, []);
 
@@ -80,22 +111,11 @@ export function DoctorSchedulePanel({ workspaceApi, queryKeyPrefix }: DoctorSche
       }),
   });
 
-  const appointmentsKey = [
-    ...queryKeyPrefix,
-    'appointments',
-    'schedule',
-    availabilityRange.from,
-    availabilityRange.to,
-  ];
+  const appointmentsKey = [...queryKeyPrefix, 'appointments', 'schedule', 'all'];
 
   const { data: appointments, isLoading: appointmentsLoading } = useQuery({
     queryKey: appointmentsKey,
-    queryFn: () =>
-      workspaceApi.listAppointments({
-        limit: 200,
-        from: availabilityRange.from,
-        to: availabilityRange.to,
-      }),
+    queryFn: () => workspaceApi.listAllAppointments({ sort: 'desc' }),
   });
 
   const invalidate = () => {
@@ -163,6 +183,46 @@ export function DoctorSchedulePanel({ workspaceApi, queryKeyPrefix }: DoctorSche
     onError: (error) => showAlert(t('common.error'), getApiErrorMessage(error)),
   });
 
+  const createPrivateMutation = useMutation({
+    mutationFn: (payload: Parameters<DoctorWorkspaceApi['createPrivateAppointment']>[0]) =>
+      workspaceApi.createPrivateAppointment(payload),
+    onSuccess: () => {
+      setPrivateModalVisible(false);
+      setEditingPrivateAppt(null);
+      invalidate();
+      showAlert(t('common.success'), t('doctor.privateAppointmentCreated'));
+    },
+    onError: (error) => showAlert(t('common.error'), getApiErrorMessage(error)),
+  });
+
+  const updatePrivateMutation = useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Parameters<DoctorWorkspaceApi['updatePrivateAppointment']>[1];
+    }) => workspaceApi.updatePrivateAppointment(id, payload),
+    onSuccess: () => {
+      setPrivateModalVisible(false);
+      setEditingPrivateAppt(null);
+      invalidate();
+      showAlert(t('common.success'), t('doctor.privateAppointmentUpdated'));
+    },
+    onError: (error) => showAlert(t('common.error'), getApiErrorMessage(error)),
+  });
+
+  const deletePrivateMutation = useMutation({
+    mutationFn: (id: string) => workspaceApi.deletePrivateAppointment(id),
+    onSuccess: () => {
+      setPrivateModalVisible(false);
+      setEditingPrivateAppt(null);
+      invalidate();
+      showAlert(t('common.success'), t('doctor.privateAppointmentDeleted'));
+    },
+    onError: (error) => showAlert(t('common.error'), getApiErrorMessage(error)),
+  });
+
   const { data: manualBookingSlots = [], isLoading: manualSlotsLoading } = useQuery({
     queryKey: [
       ...queryKeyPrefix,
@@ -202,26 +262,59 @@ export function DoctorSchedulePanel({ workspaceApi, queryKeyPrefix }: DoctorSche
       .filter((day) => day.availableSlots.length > 0 || day.bookedSlots.length > 0);
   }, [slotsByDate]);
 
-  const bookedAppointmentsByDate = useMemo(() => {
-    const now = new Date();
-    const grouped = new Map<string, Appointment[]>();
+  const { upcomingBookedByDate, pastBookedByDate, bookedCount } = useMemo(() => {
+    const upcoming: Appointment[] = [];
+    const past: Appointment[] = [];
 
     for (const appointment of (appointments ?? []) as Appointment[]) {
-      if (['CANCELLED', 'REJECTED'].includes(appointment.status)) continue;
-      if (getAppointmentDateTime(appointment.date, appointment.time) > now) continue;
-      const dateKey = getAppointmentDateKey(appointment.date);
-      const existing = grouped.get(dateKey) ?? [];
-      existing.push(appointment);
-      grouped.set(dateKey, existing);
+      if (isPastBookedAppointment(appointment)) {
+        past.push(appointment);
+      } else {
+        upcoming.push(appointment);
+      }
     }
 
-    return Array.from(grouped.entries())
-      .sort(([left], [right]) => right.localeCompare(left))
-      .map(([date, dayAppointments]) => ({
-        date,
-        appointments: dayAppointments.sort((a, b) => b.time.localeCompare(a.time)),
-      }));
+    const upcomingBookedByDate = groupAppointmentsByDate(upcoming, 'asc');
+    const pastBookedByDate = groupAppointmentsByDate(past, 'desc');
+
+    return {
+      upcomingBookedByDate,
+      pastBookedByDate,
+      bookedCount: upcoming.length + past.length,
+    };
   }, [appointments]);
+
+  const renderBookedDayGroups = (days: ReturnType<typeof groupAppointmentsByDate>) =>
+    days.map((day) => (
+      <View key={day.date} className="mb-4">
+        <DaySectionHeader dateKey={day.date} />
+        <View className="gap-2">
+          {day.appointments.map((appointment) => {
+            const patientName =
+              appointment.patient?.name ??
+              appointment.patientName ??
+              (appointment.isPrivate ? t('doctor.privateAppointment') : t('doctor.unknownPatient'));
+            const patientPhone = appointment.patient?.phone ?? appointment.patientPhone ?? null;
+            return (
+              <BookedAppointmentListItem
+                key={appointment.id}
+                appointment={appointment}
+                patientName={patientName}
+                patientPhone={patientPhone}
+                onPress={() => {
+                  if (appointment.isPrivate) {
+                    setEditingPrivateAppt(appointment);
+                    setPrivateModalVisible(true);
+                  } else {
+                    setSelectedAppointment(appointment);
+                  }
+                }}
+              />
+            );
+          })}
+        </View>
+      </View>
+    ));
 
   const handleDeleteDay = async (day: (typeof availableDays)[number]) => {
     if (!day.availableSlots.length) return;
@@ -248,21 +341,44 @@ export function DoctorSchedulePanel({ workspaceApi, queryKeyPrefix }: DoctorSche
   return (
     <>
       <ScrollView className="flex-1" contentContainerClassName="px-6 pb-10">
-      <View className="mb-4 flex-row gap-3">
-        <View className="flex-1">
-          <Button title={t('doctor.generateSlots')} onPress={() => setGenerateVisible(true)} />
-        </View>
-        <View className="flex-1">
-          <Button
-            title={t('doctor.addManualBooking')}
-            variant="outline"
-            onPress={() => setManualBookingVisible(true)}
-          />
-        </View>
+      <View className="mb-4 gap-3">
+        <ScheduleActionCard
+          title={t('doctor.generateSlots')}
+          subtitle={t('doctor.generateSlotsHint')}
+          icon="calendar"
+          onPress={() => setGenerateVisible(true)}
+        />
+        <ScheduleActionCard
+          title={t('doctor.manageWeeklySchedule')}
+          subtitle={t('doctor.manageWeeklyScheduleCardHint')}
+          icon="schedule"
+          iconBackground="#EFF6FF"
+          iconColor="#2563EB"
+          onPress={() => setWeeklyScheduleVisible(true)}
+        />
+        <ScheduleActionCard
+          title={t('doctor.addManualBooking')}
+          subtitle={t('doctor.addManualBookingHint')}
+          icon="plus"
+          iconBackground="#ECFDF5"
+          iconColor="#059669"
+          onPress={() => setManualBookingVisible(true)}
+        />
+        <ScheduleActionCard
+          title={t('doctor.privateAppointment')}
+          subtitle={t('doctor.addPrivateAppointmentHint')}
+          icon="shield"
+          iconBackground="#F5F3FF"
+          iconColor="#7C3AED"
+          onPress={() => {
+            setEditingPrivateAppt(null);
+            setPrivateModalVisible(true);
+          }}
+        />
       </View>
 
       {schedulesLoading ? (
-        <ActivityIndicator color={UI.primary} className="my-4" />
+        <AppLoader className="my-4" />
       ) : schedules?.length ? (
         <View className="mb-4 rounded-card border border-slate-100 bg-white p-4">
           <Text className="mb-2 text-sm font-semibold text-slate-900">{t('doctor.weeklySchedule')}</Text>
@@ -275,7 +391,7 @@ export function DoctorSchedulePanel({ workspaceApi, queryKeyPrefix }: DoctorSche
       ) : null}
 
       {slotsLoading ? (
-        <ActivityIndicator color={UI.primary} className="my-6" />
+        <AppLoader className="my-6" />
       ) : (
         <>
           <View
@@ -335,34 +451,47 @@ export function DoctorSchedulePanel({ workspaceApi, queryKeyPrefix }: DoctorSche
             }}
           >
             {t('doctor.bookedAppointmentsList')}
+            {bookedCount > 0 ? ` (${bookedCount})` : ''}
           </Text>
         </View>
 
         <View className="p-4">
           {appointmentsLoading ? (
-            <ActivityIndicator color={UI.primary} className="my-4" />
-          ) : bookedAppointmentsByDate.length > 0 ? (
-            bookedAppointmentsByDate.map((day) => (
-                <View key={day.date} className="mb-4">
-                  <DaySectionHeader dateKey={day.date} />
-                  <View className="gap-2">
-                    {day.appointments.map((appointment) => {
-                      const patientName =
-                        appointment.patient?.name ??
-                        appointment.patientName ??
-                        t('doctor.unknownPatient');
-                      return (
-                        <BookedAppointmentListItem
-                          key={appointment.id}
-                          appointment={appointment}
-                          patientName={patientName}
-                          onPress={() => setSelectedAppointment(appointment)}
-                        />
-                      );
-                    })}
-                  </View>
+            <AppLoader className="my-4" />
+          ) : bookedCount > 0 ? (
+            <>
+              {upcomingBookedByDate.length > 0 ? (
+                <View className="mb-5">
+                  <Text
+                    className="mb-3 text-sm font-semibold text-heading"
+                    style={{
+                      fontFamily: typography.fontFamily,
+                      fontWeight: typography.headingWeight,
+                      textAlign: isRtl ? 'right' : 'left',
+                    }}
+                  >
+                    {t('doctor.upcomingBookedAppointments')}
+                  </Text>
+                  {renderBookedDayGroups(upcomingBookedByDate)}
                 </View>
-            ))
+              ) : null}
+
+              {pastBookedByDate.length > 0 ? (
+                <View>
+                  <Text
+                    className="mb-3 text-sm font-semibold text-heading"
+                    style={{
+                      fontFamily: typography.fontFamily,
+                      fontWeight: typography.headingWeight,
+                      textAlign: isRtl ? 'right' : 'left',
+                    }}
+                  >
+                    {t('doctor.pastBookedAppointments')}
+                  </Text>
+                  {renderBookedDayGroups(pastBookedByDate)}
+                </View>
+              ) : null}
+            </>
           ) : (
             <Text
               className="text-sm text-slate-500"
@@ -379,10 +508,19 @@ export function DoctorSchedulePanel({ workspaceApi, queryKeyPrefix }: DoctorSche
       <GenerateSlotsModal
         visible={generateVisible}
         onClose={() => setGenerateVisible(false)}
+        schedules={(schedules ?? []) as DoctorSchedule[]}
         loading={generateMutation.isPending}
         onSubmit={async (payload) => {
           await generateMutation.mutateAsync(payload);
         }}
+      />
+
+      <WeeklyScheduleModal
+        visible={weeklyScheduleVisible}
+        onClose={() => setWeeklyScheduleVisible(false)}
+        workspaceApi={workspaceApi}
+        schedulesQueryKey={schedulesKey}
+        onSaved={invalidate}
       />
 
       <BookedAppointmentDetailModal
@@ -399,6 +537,28 @@ export function DoctorSchedulePanel({ workspaceApi, queryKeyPrefix }: DoctorSche
         loading={manualBookMutation.isPending}
         onSubmit={async (payload) => {
           await manualBookMutation.mutateAsync(payload);
+        }}
+      />
+
+      <PrivateAppointmentModal
+        visible={privateModalVisible}
+        appointment={editingPrivateAppt}
+        loadPatients={() => workspaceApi.listPatients()}
+        onClose={() => {
+          setPrivateModalVisible(false);
+          setEditingPrivateAppt(null);
+        }}
+        loading={createPrivateMutation.isPending || updatePrivateMutation.isPending}
+        deleteLoading={deletePrivateMutation.isPending}
+        onSubmit={async (payload) => {
+          if (editingPrivateAppt) {
+            await updatePrivateMutation.mutateAsync({ id: editingPrivateAppt.id, payload });
+          } else {
+            await createPrivateMutation.mutateAsync(payload);
+          }
+        }}
+        onDelete={async (id) => {
+          await deletePrivateMutation.mutateAsync(id);
         }}
       />
     </>

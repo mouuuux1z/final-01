@@ -18,6 +18,16 @@ function ensureDatabaseUrl(): void {
   }
 }
 
+function maskDatabaseHost(databaseUrl: string | undefined): string | null {
+  if (!databaseUrl?.trim()) return null;
+  try {
+    const parsed = new URL(databaseUrl.replace(/^postgresql:\/\//, 'http://'));
+    return parsed.host;
+  } catch {
+    return 'unparseable';
+  }
+}
+
 async function bootstrap(): Promise<void> {
   ensureDatabaseUrl();
 
@@ -33,6 +43,7 @@ async function bootstrap(): Promise<void> {
     port,
     nodeEnv: env.NODE_ENV,
     hasDatabaseUrl: Boolean(process.env.DATABASE_URL?.trim()),
+    databaseHost: maskDatabaseHost(process.env.DATABASE_URL),
     jwtSecretLength: process.env.JWT_SECRET?.length ?? 0,
     railwayDomain: process.env.RAILWAY_PUBLIC_DOMAIN ?? null,
   });

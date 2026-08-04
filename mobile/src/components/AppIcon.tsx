@@ -9,6 +9,7 @@ import {
   Calendar,
   CalendarDays,
   CheckCircle2,
+  CheckCheck,
   ChevronLeft,
   Clock,
   Dna,
@@ -25,6 +26,7 @@ import {
   MapPin,
   Menu,
   MessageCircle,
+  Paperclip,
   Phone,
   Plus,
   Radiation,
@@ -63,6 +65,8 @@ export type AppIconName =
   | 'clock'
   | 'hospital'
   | 'messages'
+  | 'attach'
+  | 'readReceipt'
   | 'plus'
   | 'bell'
   | 'grid'
@@ -111,6 +115,8 @@ const ICONS: Record<AppIconName, LucideIcon> = {
   clock: Clock,
   hospital: Building2,
   messages: MessageCircle,
+  attach: Paperclip,
+  readReceipt: CheckCheck,
   plus: Plus,
   bell: Bell,
   grid: LayoutGrid,
@@ -146,6 +152,7 @@ interface AppIconProps {
   size?: number;
   color?: string;
   strokeWidth?: number;
+  style?: import('react-native').StyleProp<import('react-native').ViewStyle>;
 }
 
 export function AppIcon({
@@ -153,9 +160,10 @@ export function AppIcon({
   size = 24,
   color = '#334155',
   strokeWidth = 2,
+  style,
 }: AppIconProps) {
   const Icon = ICONS[name];
-  return <Icon size={size} color={color} strokeWidth={strokeWidth} />;
+  return <Icon size={size} color={color} strokeWidth={strokeWidth} style={style} />;
 }
 
 export const TAB_ACTIVE_COLOR = '#0066ff';

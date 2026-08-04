@@ -1,22 +1,22 @@
 import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppIcon } from '../AppIcon';
-import { AppLogo } from '../AppLogo';
 import { UI } from '../../theme/ui';
 import { useTypography } from '../../hooks/useTypography';
 import { GlassSurface } from './GlassSurface';
 
 export function PatientHeader() {
   const { t } = useTranslation();
+  const typography = useTypography();
 
   return (
-    <View className="mb-5 flex-row items-center justify-end">
-      <View className="items-end">
-        <Text className="text-xs text-on-sky-muted">{t('common.welcome')}</Text>
-        <View className="mt-1">
-          <AppLogo size={48} />
-        </View>
-      </View>
+    <View className="mb-5">
+      <Text
+        className="text-3xl text-on-sky"
+        style={{ fontFamily: typography.fontFamily, fontWeight: typography.headingWeight }}
+      >
+        {t('home.welcomeBack')}
+      </Text>
     </View>
   );
 }

@@ -5,9 +5,11 @@ import type { UserType } from '../types';
 export const SocketEvents = {
   APPOINTMENT_NEW: 'appointment:new',
   APPOINTMENT_UPDATED: 'appointment:updated',
+  QUEUE_UPDATED: 'queue:updated',
   PATIENT_PROFILE_UPDATED: 'patient:profile:updated',
   NOTIFICATION_NEW: 'notification:new',
   CHAT_MESSAGE: 'chat:message',
+  CHAT_READ: 'chat:read',
 } as const;
 
 let socket: Socket | null = null;

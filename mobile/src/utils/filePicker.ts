@@ -16,6 +16,14 @@ const CERTIFICATE_MIME_TYPES = [
   'image/*',
 ] as const;
 
+const CHAT_MIME_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/*',
+] as const;
+
 function guessMimeType(name: string, mimeType?: string | null): string {
   if (mimeType && mimeType !== 'application/octet-stream') return mimeType;
   const lower = name.toLowerCase();
@@ -26,12 +34,12 @@ function guessMimeType(name: string, mimeType?: string | null): string {
   return mimeType || 'application/octet-stream';
 }
 
-export async function pickCertificateFile(): Promise<PickedFile | null> {
+async function pickFileFromInput(accept: string): Promise<PickedFile | null> {
   if (Platform.OS === 'web' && typeof document !== 'undefined') {
     return new Promise((resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = 'application/pdf,image/jpeg,image/png,image/webp';
+      input.accept = accept;
       input.onchange = () => {
         const file = input.files?.[0];
         if (!file) {
@@ -51,7 +59,7 @@ export async function pickCertificateFile(): Promise<PickedFile | null> {
 
   try {
     const result = await DocumentPicker.getDocumentAsync({
-      type: [...CERTIFICATE_MIME_TYPES],
+      type: [...CHAT_MIME_TYPES],
       copyToCacheDirectory: true,
       multiple: false,
     });
@@ -61,7 +69,7 @@ export async function pickCertificateFile(): Promise<PickedFile | null> {
     }
 
     const asset = result.assets[0];
-    const name = asset.name || `certificate-${Date.now()}.bin`;
+    const name = asset.name || `file-${Date.now()}.bin`;
 
     return {
       uri: asset.uri,
@@ -69,9 +77,17 @@ export async function pickCertificateFile(): Promise<PickedFile | null> {
       type: guessMimeType(name, asset.mimeType),
     };
   } catch (error) {
-    console.error('[pickCertificateFile]', error);
+    console.error('[pickFileFromInput]', error);
     return null;
   }
+}
+
+export async function pickCertificateFile(): Promise<PickedFile | null> {
+  return pickFileFromInput('application/pdf,image/jpeg,image/png,image/webp');
+}
+
+export async function pickChatFile(): Promise<PickedFile | null> {
+  return pickFileFromInput('application/pdf,image/jpeg,image/png,image/webp');
 }
 
 export function appendFileToFormData(formData: FormData, field: string, picked: PickedFile): void {
@@ -84,4 +100,10 @@ export function appendFileToFormData(formData: FormData, field: string, picked: 
     name: picked.name,
     type: picked.type,
   } as unknown as Blob);
+}
+
+export function isImageFile(fileUrl: string, mimeHint?: string | null): boolean {
+  const lower = fileUrl.toLowerCase();
+  if (mimeHint?.startsWith('image/')) return true;
+  return ['.jpg', '.jpeg', '.png', '.webp', '.gif'].some((ext) => lower.endsWith(ext));
 }

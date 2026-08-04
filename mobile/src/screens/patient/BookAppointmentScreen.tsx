@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { AppLoader } from '../../components/AppLoader';
+import { I18nManager, Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -11,6 +12,7 @@ import { Input } from '../../components/Input';
 import { UI } from '../../theme/ui';
 import { api, getApiErrorMessage } from '../../services/api';
 import { showAlert } from '../../utils/alert';
+import { DateDayPicker } from '../../components/DateDayPicker';
 import { getDayChipLabels, getNextLocalDays, getAppointmentDateTime } from '../../utils/appointmentHelpers';
 import { BOOKING_BLOCK_DAYS } from '../../constants/attendance';
 import { useAuthStore } from '../../store/authStore';
@@ -107,50 +109,53 @@ export function BookAppointmentScreen({ navigation, route }: Props) {
         ) : null}
 
         <Text className="mb-3 text-sm font-semibold text-on-sky">{t('appointments.selectDate')}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6">
-          {dates.map((date) => {
-            const labels = getDayChipLabels(date, t, i18n.language);
-            return (
-              <Pressable
-                key={date}
-                onPress={() => {
-                  setSelectedDate(date);
-                  setSelectedTime(null);
-                }}
-                className={`mr-2 min-w-[72px] items-center rounded-card px-4 py-3 ${selectedDate === date ? 'bg-primary' : 'bg-white border border-slate-200'}`}
-              >
-                <Text className={`text-xs font-medium ${selectedDate === date ? 'text-white/80' : 'text-slate-500'}`}>
-                  {labels.weekday}
-                </Text>
-                <Text className={`text-lg font-bold ${selectedDate === date ? 'text-white' : 'text-slate-900'}`}>
-                  {labels.dayNumber}
-                </Text>
-                <Text className={`text-xs font-medium ${selectedDate === date ? 'text-white/80' : 'text-slate-500'}`}>
-                  {labels.month}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <DateDayPicker
+          className="mb-6"
+          tone="onSky"
+          dates={dates}
+          selectedDate={selectedDate}
+          onSelectDate={(date) => {
+            setSelectedDate(date);
+            setSelectedTime(null);
+          }}
+        />
 
         <Text className="mb-3 text-sm font-semibold text-on-sky">{t('appointments.selectTime')}</Text>
         {slotsLoading ? (
-          <ActivityIndicator color={UI.primary} className="mb-6" />
+          <AppLoader color={UI.primary} className="mb-6" />
         ) : availableTimes.length === 0 ? (
           <Text className="mb-6 text-sm text-on-sky-muted">{t('doctor.noAvailableSlots')}</Text>
         ) : (
           <View className="mb-6 flex-row flex-wrap gap-2">
-            {availableTimes.map((time) => (
-              <Pressable
-                key={time}
-                onPress={() => setSelectedTime(time)}
-                className={`rounded-btn px-4 py-2 ${selectedTime === time ? 'bg-primary' : 'bg-white border border-slate-200'}`}
-              >
-                <Text className={`text-sm font-medium ${selectedTime === time ? 'text-white' : 'text-slate-700'}`}>
-                  {time}
-                </Text>
-              </Pressable>
-            ))}
+            {availableTimes.map((time, index) => {
+              const isSelected = selectedTime === time;
+              const slotNumber = index + 1;
+              return (
+                <Pressable
+                  key={time}
+                  onPress={() => setSelectedTime(time)}
+                  className={`flex-row items-center gap-2 rounded-btn px-3 py-2 ${
+                    isSelected ? 'bg-primary' : 'border border-slate-200 bg-white'
+                  }`}
+                  style={{ flexDirection: I18nManager.isRTL ? 'row-reverse' : 'row' }}
+                >
+                  <View
+                    className={`min-w-[24px] items-center rounded-full px-1.5 py-0.5 ${
+                      isSelected ? 'bg-white/20' : 'bg-slate-100'
+                    }`}
+                  >
+                    <Text
+                      className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-primary'}`}
+                    >
+                      {slotNumber}
+                    </Text>
+                  </View>
+                  <Text className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-slate-700'}`}>
+                    {time}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         )}
 
@@ -166,7 +171,17 @@ export function BookAppointmentScreen({ navigation, route }: Props) {
 
         <Card
           className="mb-6"
-          subtitle={`${selectedDateLabels.weekday} ${selectedDateLabels.dayNumber} ${selectedDateLabels.month} · ${selectedTime ?? '—'}`}
+          subtitle={
+            selectedTime
+              ? t('appointments.bookingSummaryWithSlot', {
+                  weekday: selectedDateLabels.weekday,
+                  day: selectedDateLabels.dayNumber,
+                  month: selectedDateLabels.month,
+                  slotNumber: availableTimes.indexOf(selectedTime) + 1,
+                  time: selectedTime,
+                })
+              : `${selectedDateLabels.weekday} ${selectedDateLabels.dayNumber} ${selectedDateLabels.month} · —`
+          }
           title={doctorName}
         />
 

@@ -107,6 +107,76 @@ export class ClinicsController {
     sendSuccess(res, schedules);
   });
 
+  createDoctorSchedule = asyncHandler(async (req: Request, res: Response) => {
+    const schedule = await clinicsService.createDoctorSchedule(
+      req.user!.id,
+      parseIdParam(req.params.doctorId, 'doctorId'),
+      req.body,
+    );
+    sendSuccess(res, schedule, 'Schedule created', 201);
+  });
+
+  updateDoctorSchedule = asyncHandler(async (req: Request, res: Response) => {
+    const schedule = await clinicsService.updateDoctorSchedule(
+      req.user!.id,
+      parseIdParam(req.params.doctorId, 'doctorId'),
+      parseIdParam(req.params.scheduleId, 'scheduleId'),
+      req.body,
+    );
+    sendSuccess(res, schedule, 'Schedule updated');
+  });
+
+  deleteDoctorSchedule = asyncHandler(async (req: Request, res: Response) => {
+    await clinicsService.deleteDoctorSchedule(
+      req.user!.id,
+      parseIdParam(req.params.doctorId, 'doctorId'),
+      parseIdParam(req.params.scheduleId, 'scheduleId'),
+    );
+    sendSuccess(res, null, 'Schedule deleted');
+  });
+
+  syncDoctorWeeklySchedules = asyncHandler(async (req: Request, res: Response) => {
+    const schedules = await clinicsService.syncDoctorWeeklySchedules(
+      req.user!.id,
+      parseIdParam(req.params.doctorId, 'doctorId'),
+      req.body.days,
+    );
+    sendSuccess(res, schedules, 'Weekly schedule saved');
+  });
+
+  getDoctorTodayQueue = asyncHandler(async (req: Request, res: Response) => {
+    const queue = await clinicsService.getDoctorTodayQueue(
+      req.user!.id,
+      parseIdParam(req.params.doctorId, 'doctorId'),
+    );
+    sendSuccess(res, queue);
+  });
+
+  startDoctorReception = asyncHandler(async (req: Request, res: Response) => {
+    const queue = await clinicsService.startDoctorReception(
+      req.user!.id,
+      parseIdParam(req.params.doctorId, 'doctorId'),
+    );
+    sendSuccess(res, queue, 'Reception started');
+  });
+
+  advanceDoctorQueue = asyncHandler(async (req: Request, res: Response) => {
+    const queue = await clinicsService.advanceDoctorQueue(
+      req.user!.id,
+      parseIdParam(req.params.doctorId, 'doctorId'),
+    );
+    sendSuccess(res, queue, 'Queue advanced');
+  });
+
+  generateDoctorFromWeeklySchedule = asyncHandler(async (req: Request, res: Response) => {
+    const result = await clinicsService.generateDoctorFromWeeklySchedule(
+      req.user!.id,
+      parseIdParam(req.params.doctorId, 'doctorId'),
+      req.body,
+    );
+    sendSuccess(res, result, 'Slots generated from weekly schedule');
+  });
+
   generateDoctorRecurringAvailability = asyncHandler(async (req: Request, res: Response) => {
     const result = await clinicsService.generateDoctorRecurringAvailability(
       req.user!.id,
@@ -153,6 +223,14 @@ export class ClinicsController {
     sendSuccess(res, appointment, 'Manual booking created', 201);
   });
 
+  listDoctorPatients = asyncHandler(async (req: Request, res: Response) => {
+    const patients = await clinicsService.listDoctorPatients(
+      req.user!.id,
+      parseIdParam(req.params.doctorId, 'doctorId'),
+    );
+    sendSuccess(res, patients);
+  });
+
   acceptDoctorAppointment = asyncHandler(async (req: Request, res: Response) => {
     const appointment = await clinicsService.acceptDoctorAppointment(
       req.user!.id,
@@ -192,11 +270,14 @@ export class ClinicsController {
   });
 
   sendDoctorChatMessage = asyncHandler(async (req: Request, res: Response) => {
+    const file = req.file;
+    const fileUrl = file?.filename ? getFileUrl(file.filename) : undefined;
     const message = await clinicsService.sendDoctorChatMessage(
       req.user!.id,
       parseIdParam(req.params.doctorId, 'doctorId'),
       req.body.patientId,
       req.body.message,
+      fileUrl,
     );
     sendSuccess(res, message, 'Message sent', 201);
   });

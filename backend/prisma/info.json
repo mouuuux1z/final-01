@@ -50,7 +50,7 @@
       }
     },
     "typography": {
-      "font_family_arabic": "Tajawal, sans-serif",
+      "font_family_arabic": "MadikaArabic, sans-serif",
       "font_family_english": "Inter, sans-serif",
       "title_weight": "700",
       "body_weight": "400"

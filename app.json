@@ -2,15 +2,15 @@
   "expo": {
     "name": "MYDoc",
     "slug": "mydoc",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
-    "icon": "./mobile/assets/android-icon-foreground.png",
+    "icon": "./mobile/assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./mobile/assets/android-icon-foreground.png",
+      "image": "./mobile/assets/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#E8F4FC"
+      "backgroundColor": "#2558B8"
     },
     "ios": {
       "supportsTablet": true,
@@ -21,18 +21,19 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./mobile/assets/android-icon-foreground.png",
-        "backgroundColor": "#E8F4FC"
+        "foregroundImage": "./mobile/assets/icon.png",
+        "backgroundColor": "#2558B8"
       },
       "package": "com.mydoc.appp",
-      "versionCode": 2,
+      "versionCode": 3,
       "usesCleartextTraffic": true
     },
     "web": {
-      "favicon": "./mobile/assets/android-icon-foreground.png",
+      "favicon": "./mobile/assets/icon.png",
       "bundler": "metro"
     },
     "plugins": [
+      "expo-font",
       "expo-secure-store",
       "expo-localization",
       "expo-asset",
@@ -41,6 +42,9 @@
         "expo-build-properties",
         {
           "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0",
             "usesCleartextTraffic": true
           }
         }
@@ -50,6 +54,7 @@
     "extra": {
       "apiUrl": "http://197.140.142.178/api",
       "socketUrl": "http://197.140.142.178",
+      "appTzOffsetMinutes": 60,
       "eas": {
         "projectId": "9900ac58-1334-464b-ab3e-8b6335978d3f"
       }

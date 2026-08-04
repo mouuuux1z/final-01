@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { EntityStatus, UserType } from '@prisma/client';
 import { env } from '../../config/env.js';
 import { AppError } from '../../utils/AppError.js';
@@ -10,6 +10,7 @@ import { invalidateCachedSession } from '../../utils/sessionCache.js';
 import type { LoginInput, RegisterInput } from './auth.schema.js';
 import { clinicRegisterMultipartSchema, doctorRegisterMultipartSchema } from './auth.schema.js';
 import type { z } from 'zod';
+import { sendPasswordResetEmail } from '../../services/email.service.js';
 
 type DoctorRegisterInput = z.infer<typeof doctorRegisterMultipartSchema> & { certificate: string };
 type ClinicRegisterInput = z.infer<typeof clinicRegisterMultipartSchema> & { certificate: string };
@@ -138,6 +139,63 @@ export class AuthService {
     await authRepository.deleteSession(token);
   }
 
+  async forgotPassword(email: string, language?: string) {
+    const account = await authRepository.findAccountByEmail(email);
+
+    if (account) {
+      const code = randomInt(100_000, 1_000_000).toString();
+      const codeHash = await hashPassword(code);
+      const expiresAt = parseExpiresIn(env.PASSWORD_RESET_CODE_EXPIRES_IN);
+
+      await authRepository.invalidatePasswordResetTokens(email);
+      await authRepository.createPasswordResetToken({
+        email,
+        codeHash,
+        userType: account.userType,
+        userId: account.userId,
+        expiresAt,
+      });
+
+      await sendPasswordResetEmail({
+        to: email,
+        name: account.name,
+        code,
+        language,
+      });
+    }
+
+    return {
+      message: 'If an account exists for this email, a reset code has been sent.',
+    };
+  }
+
+  async resetPassword(email: string, code: string, password: string) {
+    const tokens = await authRepository.findActivePasswordResetTokens(email);
+    if (tokens.length === 0) {
+      throw new AppError('Invalid or expired reset code', 400);
+    }
+
+    let matchedToken: (typeof tokens)[number] | null = null;
+    for (const token of tokens) {
+      const valid = await comparePassword(code, token.codeHash);
+      if (valid) {
+        matchedToken = token;
+        break;
+      }
+    }
+
+    if (!matchedToken) {
+      throw new AppError('Invalid or expired reset code', 400);
+    }
+
+    const passwordHash = await hashPassword(password);
+    await authRepository.updateUserPassword(matchedToken.userType, matchedToken.userId, passwordHash);
+    await authRepository.markPasswordResetTokenUsed(matchedToken.id);
+    await authRepository.invalidatePasswordResetTokens(email);
+
+    return { message: 'Password updated successfully' };
+  }
+
   async getProfile(userId: string, userType: UserType) {
     if (userType === UserType.PATIENT) {
       const user = await syncPatientCommitmentState(userId);
@@ -192,24 +250,21 @@ export class AuthService {
     password: string,
     preferredType?: UserType,
   ): Promise<{ userType: UserType; user: { id: string; status?: EntityStatus } } | null> {
-    const searchOrder: UserType[] = preferredType
-      ? [preferredType]
-      : [UserType.ADMIN, UserType.CLINIC, UserType.DOCTOR, UserType.PATIENT];
-
-    for (const userType of searchOrder) {
-      const user = await this.findUserWithPassword(email, userType);
-      if (!user) continue;
+    if (preferredType) {
+      const user = await this.findUserWithPassword(email, preferredType);
+      if (!user) return null;
 
       const valid = await comparePassword(password, user.password);
-      if (!valid) {
-        if (preferredType) return null;
-        continue;
-      }
-
-      return { userType, user };
+      return valid ? { userType: preferredType, user } : null;
     }
 
-    return null;
+    const account = await authRepository.findAccountWithPasswordByEmail(email);
+    if (!account) return null;
+
+    const valid = await comparePassword(password, account.user.password);
+    if (!valid) return null;
+
+    return { userType: account.userType, user: account.user };
   }
 
   private async findUserWithPassword(email: string, userType: UserType) {
@@ -242,6 +297,30 @@ export class AuthService {
     await authRepository.updateSessionToken(session.id, token);
 
     return { token, expiresAt };
+  }
+
+  async deleteAccount(userId: string, userType: UserType, password: string, sessionToken?: string) {
+    if (userType === UserType.ADMIN) {
+      throw new AppError('Account deletion is not allowed', 403);
+    }
+
+    const storedPassword = await authRepository.findUserPassword(userType, userId);
+    if (!storedPassword) {
+      throw new AppError('User not found', 404);
+    }
+
+    const valid = await comparePassword(password, storedPassword);
+    if (!valid) {
+      throw new AppError('Incorrect password', 401);
+    }
+
+    await authRepository.deleteUserAccount(userType, userId);
+
+    if (sessionToken) {
+      invalidateCachedSession(sessionToken);
+    }
+
+    return { message: 'Account deleted successfully' };
   }
 }
 

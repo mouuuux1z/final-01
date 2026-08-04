@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { AppLoader } from '../../components/AppLoader';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import type { CompositeScreenProps } from '@react-navigation/native';
@@ -6,6 +7,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CategoryChip, CategoryChipRow } from '../../components/ui/MedFinderCards';
 import { CommitmentBalanceCard } from '../../components/ui/CommitmentBalanceCard';
+import { PromoBanner } from '../../components/ui/PromoBanner';
 import { PatientHeader, SearchHero, SectionHeader } from '../../components/ui/PatientHeader';
 import { ScreenShell } from '../../components/ui/ScreenShell';
 import { DoctorCard } from '../../components/DoctorCard';
@@ -48,6 +50,8 @@ export function HomeScreen({ navigation }: Props) {
 
       <CommitmentBalanceCard />
 
+      <PromoBanner onPress={() => navigation.navigate('Search')} />
+
       <SearchHero onPress={() => navigation.navigate('Search')} />
 
       <CategoryChipRow className="mb-4">
@@ -68,7 +72,7 @@ export function HomeScreen({ navigation }: Props) {
       />
 
       {isLoading ? (
-        <ActivityIndicator color={UI.primary} className="my-8" />
+        <AppLoader className="my-8" />
       ) : topDoctors.length === 0 ? (
         <Pressable
           onPress={() => navigation.navigate('Search')}

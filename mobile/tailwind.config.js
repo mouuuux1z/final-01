@@ -32,8 +32,8 @@ module.exports = {
       fontFamily: {
         sans: ['Inter_400Regular', 'Inter', 'system-ui', 'sans-serif'],
         heading: ['Inter_700Bold', 'Inter', 'system-ui', 'sans-serif'],
-        arabic: ['Tajawal_400Regular', 'Tajawal', 'sans-serif'],
-        'arabic-heading': ['Tajawal_700Bold', 'Tajawal', 'sans-serif'],
+        arabic: ['MadikaArabic_400Regular', 'MadikaArabic', 'sans-serif'],
+        'arabic-heading': ['MadikaArabic_800ExtraBold', 'MadikaArabic', 'sans-serif'],
       },
       boxShadow: {
         card: '0px 10px 30px rgba(0, 102, 255, 0.06)',

@@ -1,7 +1,8 @@
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { AppLoader } from '../AppLoader';
 import { useTranslation } from 'react-i18next';
 import { ATTENDANCE_COMMITMENT_MAX, normalizeCommitmentPoints } from '../../constants/attendance';
-import { isAttendanceMarkingAvailable } from '../../utils/appointmentHelpers';
+import { useAttendanceMarkingAvailable } from '../../hooks/useAttendanceMarkingAvailable';
 import type { Appointment, AttendanceStatus } from '../../types';
 
 interface AppointmentAttendanceActionsProps {
@@ -20,9 +21,13 @@ export function AppointmentAttendanceActions({
   const { t } = useTranslation();
   const isPending =
     appointment.attendanceStatus === 'PENDING' || appointment.attendanceStatus === 'LATE';
-  const canMark =
-    isPending && isAttendanceMarkingAvailable(appointment.date, appointment.time);
+  const markingAvailable = useAttendanceMarkingAvailable(appointment.date, appointment.time);
+  const canMark = isPending && markingAvailable;
   const isMarking = markingId === appointment.id;
+
+  if (appointment.isPrivate) {
+    return null;
+  }
   const commitmentPoints = normalizeCommitmentPoints(appointment.patient?.attendancePoints);
 
   const attendedClassName =
@@ -58,7 +63,7 @@ export function AppointmentAttendanceActions({
               className={`${attendedClassName}${!canMark ? ' opacity-50' : ''}`}
             >
               {isMarking ? (
-                <ActivityIndicator size="small" color={variant === 'queue' ? '#16A34A' : '#FFFFFF'} />
+                <AppLoader size="small" color={variant === 'queue' ? '#16A34A' : '#FFFFFF'} />
               ) : (
                 <Text className={attendedTextClassName}>
                   ✅ {t('doctor.markAttended')}
@@ -71,7 +76,7 @@ export function AppointmentAttendanceActions({
               className={`${absentClassName}${!canMark ? ' opacity-50' : ''}`}
             >
               {isMarking ? (
-                <ActivityIndicator size="small" color={variant === 'queue' ? '#DC2626' : '#FFFFFF'} />
+                <AppLoader size="small" color={variant === 'queue' ? '#DC2626' : '#FFFFFF'} />
               ) : (
                 <Text className={absentTextClassName}>
                   ❌ {t('doctor.markAbsent')}

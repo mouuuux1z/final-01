@@ -65,3 +65,18 @@ export const clinicRegisterMultipartSchema = z.object({
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ClinicRegisterInput = z.infer<typeof clinicRegisterMultipartSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email().transform((value) => value.trim().toLowerCase()),
+  language: z.string().max(10).optional(),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email().transform((value) => value.trim().toLowerCase()),
+  code: z.string().regex(/^\d{6}$/, 'Reset code must be 6 digits'),
+  password: z.string().min(8).max(128),
+});
+
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1).max(128),
+});

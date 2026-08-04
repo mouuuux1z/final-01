@@ -1,21 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   Text,
-  TextInput,
   View,
 } from 'react-native';
+import { AppLoader } from '../../components/AppLoader';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppIcon } from '../../components/AppIcon';
+import { ChatComposer } from '../../components/chat/ChatComposer';
+import { ChatMessageBubble } from '../../components/chat/ChatMessageBubble';
 import { api, getApiErrorMessage } from '../../services/api';
+import { sendPatientChatMessage } from '../../services/chatApi';
 import { showAlert } from '../../utils/alert';
+import { pickChatFile, type PickedFile } from '../../utils/filePicker';
 import { markChatAsRead, useChatRoom } from '../../hooks/useChatRoom';
+import { useChatSync } from '../../hooks/useChatSync';
 import { useAuthStore } from '../../store/authStore';
 import type { ApiResponse, ChatAccess, ChatMessage, PaginatedResponse } from '../../types';
 import type { PatientStackParamList } from '../../navigation/PatientTabs';
@@ -34,9 +38,12 @@ export function PatientChatScreen({ navigation, route }: Props) {
   const { doctorId, doctorName } = route.params;
   const patientId = useAuthStore((s) => s.user?.id) ?? route.params.patientId;
   const [message, setMessage] = useState('');
+  const [pendingFile, setPendingFile] = useState<PickedFile | null>(null);
   const listRef = useRef<FlatList<ChatMessage>>(null);
+  const chatQueryKey = ['chat', doctorId, patientId] as const;
 
   useChatRoom(doctorId, patientId);
+  useChatSync(doctorId, patientId, chatQueryKey);
 
   const { data: access, isLoading: accessLoading } = useQuery({
     queryKey: ['chat-access', doctorId, patientId],
@@ -50,7 +57,7 @@ export function PatientChatScreen({ navigation, route }: Props) {
   });
 
   const { data: messages, isLoading: messagesLoading } = useQuery({
-    queryKey: ['chat', doctorId, patientId],
+    queryKey: chatQueryKey,
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<PaginatedResponse<ChatMessage>>>('/chat/messages', {
         params: { doctorId, patientId, limit: 100 },
@@ -61,12 +68,18 @@ export function PatientChatScreen({ navigation, route }: Props) {
   });
 
   const sendMutation = useMutation({
-    mutationFn: async (text: string) => {
-      await api.post('/chat/messages', { doctorId, patientId, message: text });
+    mutationFn: async (payload: { text: string; file?: PickedFile | null }) => {
+      await sendPatientChatMessage({
+        doctorId,
+        patientId,
+        message: payload.text,
+        file: payload.file,
+      });
     },
     onSuccess: () => {
       setMessage('');
-      void queryClient.invalidateQueries({ queryKey: ['chat', doctorId, patientId] });
+      setPendingFile(null);
+      void queryClient.invalidateQueries({ queryKey: chatQueryKey });
       void queryClient.invalidateQueries({ queryKey: ['chat-conversations'] });
     },
     onError: (err) => showAlert(t('common.error'), getApiErrorMessage(err)),
@@ -74,9 +87,16 @@ export function PatientChatScreen({ navigation, route }: Props) {
 
   const handleSend = useCallback(() => {
     const trimmed = message.trim();
-    if (!trimmed || sendMutation.isPending || !access?.canPatientReply) return;
-    sendMutation.mutate(trimmed);
-  }, [message, sendMutation, access?.canPatientReply]);
+    if ((!trimmed && !pendingFile) || sendMutation.isPending || !access?.canPatientReply) return;
+    sendMutation.mutate({ text: trimmed, file: pendingFile });
+  }, [message, pendingFile, sendMutation, access?.canPatientReply]);
+
+  const handleAttach = useCallback(async () => {
+    if (sendMutation.isPending || !access?.canPatientReply) return;
+    const picked = await pickChatFile();
+    if (!picked) return;
+    setPendingFile(picked);
+  }, [sendMutation.isPending, access?.canPatientReply]);
 
   useEffect(() => {
     if (messages?.length && doctorId && patientId) {
@@ -93,7 +113,14 @@ export function PatientChatScreen({ navigation, route }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       className="flex-1"
     >
-      <View className="flex-row items-center bg-primary px-4 pb-4 pt-14">
+      <View
+        className="flex-row items-center bg-primary px-4 pb-5 pt-14"
+        style={{
+          borderBottomLeftRadius: UI.radius.card,
+          borderBottomRightRadius: UI.radius.card,
+          overflow: 'hidden',
+        }}
+      >
         <Pressable onPress={() => navigation.goBack()} className="mr-3">
           <Text className="text-base font-medium text-white">{t('common.back')}</Text>
         </Pressable>
@@ -112,7 +139,7 @@ export function PatientChatScreen({ navigation, route }: Props) {
           <Text className="mt-2 text-center text-sm text-slate-500">{t('chat.patientCannotStart')}</Text>
         </View>
       ) : isLoading ? (
-        <ActivityIndicator className="mt-10" color={UI.primary} />
+        <AppLoader className="mt-10" />
       ) : (
         <>
           {!canReply ? (
@@ -126,19 +153,13 @@ export function PatientChatScreen({ navigation, route }: Props) {
             data={messages ?? []}
             keyExtractor={(item) => item.id}
             contentContainerClassName="px-4 py-4"
-            renderItem={({ item }) => {
-              const isPatient = item.senderType === 'PATIENT';
-              return (
-                <View className={`mb-3 max-w-[85%] ${isPatient ? 'self-end' : 'self-start'}`}>
-                  <View className={`rounded-card px-4 py-2.5 ${isPatient ? 'bg-primary' : 'bg-white border border-slate-100'}`}>
-                    <Text className={`text-sm ${isPatient ? 'text-white' : 'text-slate-800'}`}>{item.message}</Text>
-                  </View>
-                  <Text className={`mt-1 text-[10px] text-slate-400 ${isPatient ? 'text-right' : 'text-left'}`}>
-                    {formatTime(item.createdAt)}
-                  </Text>
-                </View>
-              );
-            }}
+            renderItem={({ item }) => (
+              <ChatMessageBubble
+                message={item}
+                isOwn={item.senderType === 'PATIENT'}
+                formatTime={formatTime}
+              />
+            )}
           />
         </>
       )}
@@ -146,23 +167,28 @@ export function PatientChatScreen({ navigation, route }: Props) {
       {access?.initiated ? (
         <View className="border-t border-slate-200 bg-white px-4 py-3">
           {canReply ? (
-            <View className="flex-row items-center gap-2">
-              <TextInput
+            <>
+              {pendingFile ? (
+                <View className="mb-2 flex-row items-center justify-between rounded-card bg-slate-50 px-3 py-2">
+                  <Text className="flex-1 text-sm text-slate-700" numberOfLines={1}>
+                    {pendingFile.name}
+                  </Text>
+                  <Pressable onPress={() => setPendingFile(null)}>
+                    <Text className="text-sm font-semibold text-red-500">{t('common.cancel')}</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+              <ChatComposer
                 value={message}
                 onChangeText={setMessage}
+                onSend={handleSend}
+                onAttach={() => void handleAttach()}
                 placeholder={t('chat.messagePlaceholder')}
-                placeholderTextColor="#94A3B8"
-                className="flex-1 rounded-card bg-slate-100 px-4 py-3 text-base text-slate-900"
-                multiline
+                sendLabel={t('chat.send')}
+                sending={sendMutation.isPending}
+                canSend={Boolean(message.trim() || pendingFile)}
               />
-              <Pressable
-                onPress={handleSend}
-                disabled={sendMutation.isPending || !message.trim()}
-                className="rounded-card bg-primary px-4 py-3"
-              >
-                <Text className="font-semibold text-white">{t('chat.send')}</Text>
-              </Pressable>
-            </View>
+            </>
           ) : (
             <Text className="text-center text-sm text-slate-500">{t('chat.inputDisabled')}</Text>
           )}

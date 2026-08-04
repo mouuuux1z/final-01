@@ -1,7 +1,7 @@
 {
   "cli": {
     "version": ">= 20.5.1",
-    "appVersionSource": "remote"
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -9,7 +9,8 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "http://197.140.142.178/api",
-        "EXPO_PUBLIC_SOCKET_URL": "http://197.140.142.178"
+        "EXPO_PUBLIC_SOCKET_URL": "http://197.140.142.178",
+        "EXPO_PUBLIC_APP_TZ_OFFSET_MINUTES": "60"
       }
     },
     "preview": {
@@ -20,14 +21,16 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "http://197.140.142.178/api",
-        "EXPO_PUBLIC_SOCKET_URL": "http://197.140.142.178"
+        "EXPO_PUBLIC_SOCKET_URL": "http://197.140.142.178",
+        "EXPO_PUBLIC_APP_TZ_OFFSET_MINUTES": "60"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "http://197.140.142.178/api",
-        "EXPO_PUBLIC_SOCKET_URL": "http://197.140.142.178"
+        "EXPO_PUBLIC_SOCKET_URL": "http://197.140.142.178",
+        "EXPO_PUBLIC_APP_TZ_OFFSET_MINUTES": "60"
       }
     }
   },

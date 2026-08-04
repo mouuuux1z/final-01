@@ -31,7 +31,16 @@ export async function getDoctorRatings(
     `/doctors/${doctorId}/ratings`,
     { params: { page, limit } },
   );
-  return data.data;
+
+  const payload = data.data;
+  if (!payload?.meta || !Array.isArray(payload.items)) {
+    return {
+      items: [],
+      meta: { page: 1, limit, total: 0, totalPages: 1 },
+    };
+  }
+
+  return payload;
 }
 
 export interface DoctorRatingListItem {

@@ -132,6 +132,13 @@ export function BookingReceiptCard({ appointment }: BookingReceiptCardProps) {
         ) : null}
         <ReceiptRow icon="calendar" label={t('appointments.date')} value={formattedDate} />
         <ReceiptRow icon="clock" label={t('appointments.time')} value={appointment.time} />
+        {appointment.queueNumber ? (
+          <ReceiptRow
+            icon="patients"
+            label={t('queue.yourNumber')}
+            value={String(appointment.queueNumber)}
+          />
+        ) : null}
         {appointment.doctor?.city ? (
           <ReceiptRow icon="clinic" label={t('appointments.receiptCity')} value={appointment.doctor.city} />
         ) : null}

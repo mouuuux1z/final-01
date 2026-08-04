@@ -1,7 +1,3 @@
-Add the following files for Expo builds:
-- icon.png (1024x1024)
-- splash-icon.png
-- adaptive-icon.png
-- favicon.png
+Add the app icon as `icon.png` (1024x1024 recommended).
 
-Or run: npx create-expo-app@latest temp --template blank && copy assets from temp/assets
+The same file is used for splash, adaptive icon, favicon, and in-app logo (`logo.png`).

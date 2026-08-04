@@ -4,36 +4,8 @@ import { connectSocket, disconnectSocket, SocketEvents } from '../services/socke
 import { useAuthStore } from '../store/authStore';
 import { useChatStore } from '../store/chatStore';
 import { useNotificationStore } from '../store/notificationStore';
-import type { Appointment, ChatMessage, Notification, PaginatedResponse, PatientUser } from '../types';
-
-function patchAppointmentCaches(queryClient: ReturnType<typeof useQueryClient>, appointment: Appointment) {
-  queryClient.setQueriesData(
-    { queryKey: ['appointments'] },
-    (old: unknown) => {
-      if (!old) return old;
-
-      if (typeof old === 'object' && old !== null && 'items' in old && Array.isArray((old as PaginatedResponse<Appointment>).items)) {
-        const paginated = old as PaginatedResponse<Appointment>;
-        const exists = paginated.items.some((item) => item.id === appointment.id);
-        return {
-          ...paginated,
-          items: exists
-            ? paginated.items.map((item) => (item.id === appointment.id ? appointment : item))
-            : [appointment, ...paginated.items],
-        };
-      }
-
-      if (Array.isArray(old)) {
-        const exists = old.some((item) => item.id === appointment.id);
-        return exists
-          ? old.map((item) => (item.id === appointment.id ? appointment : item))
-          : old;
-      }
-
-      return old;
-    },
-  );
-}
+import { syncAttendanceAcrossCaches, patchAppointmentListCaches } from '../utils/appointmentCache';
+import type { Appointment, ChatMessage, Notification, PatientUser } from '../types';
 
 export function useSocketSync(): void {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -53,16 +25,28 @@ export function useSocketSync(): void {
 
     const socket = connectSocket(token, userType, user.id);
 
-    const onAppointmentNew = (appointment: Appointment) => {
-      patchAppointmentCaches(queryClient, appointment);
+    const invalidateScheduleAppointments = () => {
       void queryClient.invalidateQueries({
-        queryKey: ['appointments'],
+        predicate: (query) =>
+          query.queryKey.includes('appointments') && query.queryKey.includes('schedule'),
         refetchType: 'active',
       });
     };
 
+    const onAppointmentNew = (appointment: Appointment) => {
+      patchAppointmentListCaches(queryClient, appointment);
+      void queryClient.invalidateQueries({
+        queryKey: ['appointments'],
+        refetchType: 'active',
+      });
+      invalidateScheduleAppointments();
+    };
+
     const onAppointmentUpdated = (appointment: Appointment) => {
-      patchAppointmentCaches(queryClient, appointment);
+      syncAttendanceAcrossCaches(queryClient, appointment, {
+        refetchLists: userType === 'PATIENT',
+      });
+      invalidateScheduleAppointments();
     };
 
     const onPatientProfileUpdated = (profile: PatientUser) => {
@@ -87,8 +71,17 @@ export function useSocketSync(): void {
       });
     };
 
+    const onQueueUpdated = () => {
+      void queryClient.invalidateQueries({ queryKey: ['doctor', 'queue'], refetchType: 'active' });
+      void queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey.includes('queue'),
+        refetchType: 'active',
+      });
+    };
+
     socket.on(SocketEvents.APPOINTMENT_NEW, onAppointmentNew);
     socket.on(SocketEvents.APPOINTMENT_UPDATED, onAppointmentUpdated);
+    socket.on(SocketEvents.QUEUE_UPDATED, onQueueUpdated);
     socket.on(SocketEvents.PATIENT_PROFILE_UPDATED, onPatientProfileUpdated);
     socket.on(SocketEvents.NOTIFICATION_NEW, onNotificationNew);
     socket.on(SocketEvents.CHAT_MESSAGE, onChatMessage);
@@ -96,6 +89,7 @@ export function useSocketSync(): void {
     return () => {
       socket.off(SocketEvents.APPOINTMENT_NEW, onAppointmentNew);
       socket.off(SocketEvents.APPOINTMENT_UPDATED, onAppointmentUpdated);
+      socket.off(SocketEvents.QUEUE_UPDATED, onQueueUpdated);
       socket.off(SocketEvents.PATIENT_PROFILE_UPDATED, onPatientProfileUpdated);
       socket.off(SocketEvents.NOTIFICATION_NEW, onNotificationNew);
       socket.off(SocketEvents.CHAT_MESSAGE, onChatMessage);

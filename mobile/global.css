@@ -2,7 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── 1. App Root — Medical light background (web) ─── */
+@font-face {
+  font-family: 'MadikaArabic';
+  src: url('./assets/fonts/MadikaArabic-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MadikaArabic';
+  src: url('./assets/fonts/MadikaArabic-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MadikaArabic';
+  src: url('./assets/fonts/MadikaArabic-ExtraBold.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Native (APK): map Tailwind font weights to loaded Expo font files (locale via CSS vars) */
+@layer utilities {
+  .font-normal {
+    font-family: var(--font-regular, Inter_400Regular);
+    font-weight: normal;
+  }
+
+  .font-medium {
+    font-family: var(--font-medium, Inter_500Medium);
+    font-weight: normal;
+  }
+
+  .font-semibold {
+    font-family: var(--font-semibold, Inter_500Medium);
+    font-weight: normal;
+  }
+
+  .font-bold {
+    font-family: var(--font-bold, Inter_700Bold);
+    font-weight: normal;
+  }
+}
+
+/* ─── 1. App Root — Soft light blue background (web) ─── */
 html,
 body,
 #root {
@@ -14,7 +61,7 @@ body,
 }
 
 html[lang='ar'] body {
-  font-family: 'Tajawal', sans-serif;
+  font-family: 'MadikaArabic', sans-serif;
 }
 
 html[lang='en'] body,
@@ -121,7 +168,7 @@ html[lang='fr'] body {
 
 html[lang='ar'] .text-heading,
 html[lang='ar'] .text-body {
-  font-family: 'Tajawal', sans-serif;
+  font-family: 'MadikaArabic', sans-serif;
 }
 
 html[lang='en'] .text-heading,

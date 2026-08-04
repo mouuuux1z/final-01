@@ -1,8 +1,10 @@
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { AppLoader } from '../../components/AppLoader';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BookingReceiptCard } from '../../components/appointments/BookingReceiptCard';
+import { LiveQueueTrackingCard } from '../../components/appointments/LiveQueueTrackingCard';
 import { AppointmentRatingPrompt } from '../../components/ratings/AppointmentRatingPrompt';
 import { Button } from '../../components/Button';
 import { ScreenShell } from '../../components/ui/ScreenShell';
@@ -28,7 +30,7 @@ export function BookingReceiptScreen({ navigation, route }: Props) {
   if (isLoading) {
     return (
       <ScreenShell contentContainerClassName="flex-1 items-center justify-center">
-        <ActivityIndicator color={UI.primary} size="large" />
+        <AppLoader color={UI.primary} size="large" />
       </ScreenShell>
     );
   }
@@ -46,6 +48,7 @@ export function BookingReceiptScreen({ navigation, route }: Props) {
 
   return (
     <ScreenShell contentContainerClassName="pb-8">
+      <LiveQueueTrackingCard appointment={appointment} />
       <BookingReceiptCard appointment={appointment} />
 
       {appointment.status === 'COMPLETED' && appointment.doctor?.id ? (

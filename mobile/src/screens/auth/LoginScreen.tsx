@@ -3,13 +3,11 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } fro
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TopErrorBanner } from '../../components/TopErrorBanner';
-import { AppLogo } from '../../components/AppLogo';
+import { LoginHeroTagline } from '../../components/auth/LoginHeroTagline';
 import { AppIcon, type AppIconName } from '../../components/AppIcon';
-import { Button } from '../../components/Button';
-import { Input } from '../../components/Input';
+import { LoginFormCard } from '../../components/auth/LoginFormCard';
 import { resolveLoginUserType } from '../../constants/testAccounts';
 import { useTypography } from '../../hooks/useTypography';
-import { GlassSurface } from '../../components/ui/GlassSurface';
 import { useAuthStore } from '../../store/authStore';
 import { getLoginErrorMessage, getLoginPendingRoute } from '../../utils/authErrors';
 import { UI, cardShadowStyle } from '../../theme/ui';
@@ -81,57 +79,24 @@ export function LoginScreen({ navigation }: Props) {
           keyboardShouldPersistTaps="handled"
         >
           <View className="mb-8 items-center pt-6">
-            <AppLogo size={108} />
-            <Text
-              className="mt-4 text-center text-base"
-              style={{ color: '#5a6578', fontFamily: typography.fontFamilyRegular }}
-            >
-              {t('auth.loginSubtitle')}
-            </Text>
-            <Text className="mt-1 text-center text-xs" style={{ color: '#8a93a3' }}>
-              MYDoc v1.0.1
-            </Text>
+            <LoginHeroTagline />
           </View>
 
-          <GlassSurface className="rounded-card p-6" style={cardShadowStyle()}>
-            <Text
-              className="mb-5 text-xl"
-              style={{
-                color: '#000000',
-                fontFamily: typography.fontFamily,
-                fontWeight: typography.headingWeight,
-              }}
-            >
-              {t('auth.login')}
-            </Text>
-
-            <Input
-              label={t('auth.email')}
-              value={email}
-              onChangeText={(value) => {
-                setEmail(value);
-                clearError();
-              }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
-
-            <Input
-              label={t('auth.password')}
-              value={password}
-              onChangeText={(value) => {
-                setPassword(value);
-                clearError();
-              }}
-              secureTextEntry
-              autoComplete="password"
-              onSubmitEditing={() => void handleLogin()}
-              returnKeyType="go"
-            />
-
-            <Button title={t('auth.login')} loading={isLoading} onPress={() => void handleLogin()} className="mt-1" />
-          </GlassSurface>
+          <LoginFormCard
+            email={email}
+            password={password}
+            loading={isLoading}
+            onEmailChange={(value) => {
+              setEmail(value);
+              clearError();
+            }}
+            onPasswordChange={(value) => {
+              setPassword(value);
+              clearError();
+            }}
+            onSubmit={() => void handleLogin()}
+            onForgotPassword={() => navigation.navigate('ForgotPassword')}
+          />
 
           <View className="mt-7 gap-3">
             {REGISTER_OPTIONS.map((option) => (

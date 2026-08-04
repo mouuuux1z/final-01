@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { TFunction } from 'i18next';
 import { getApiErrorMessage } from '../services/api';
+import { getLocalizedNetworkUnreachableMessage } from './apiErrorMessages';
 
 const API_ERROR_KEYS: Record<string, string> = {
   'Invalid credentials': 'auth.loginError',
@@ -38,7 +39,7 @@ export function getLoginPendingRoute(error: unknown): 'ClinicPending' | 'DoctorP
 
 export function getLoginErrorMessage(error: unknown, t: TFunction, fallbackKey = 'auth.loginError'): string {
   if (axios.isAxiosError(error) && !error.response) {
-    return t('auth.networkError');
+    return getLocalizedNetworkUnreachableMessage();
   }
 
   const raw = getApiErrorMessage(error, t(fallbackKey));
@@ -93,7 +94,7 @@ export function mapRegisterApiError(
   fallbackKey = 'auth.registerError',
 ): { fieldErrors: RegisterFieldErrors; formError: string | null } {
   if (axios.isAxiosError(error) && !error.response) {
-    return { fieldErrors: {}, formError: t('auth.networkError') };
+    return { fieldErrors: {}, formError: getLocalizedNetworkUnreachableMessage() };
   }
 
   const apiFieldErrors = getApiFieldErrors(error);

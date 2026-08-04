@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppLoader } from '../AppLoader';
 import { useTranslation } from 'react-i18next';
 import { getDayChipLabels, toDateInputValue } from '../../utils/appointmentHelpers';
 import { useTypography } from '../../hooks/useTypography';
@@ -65,7 +66,7 @@ export function DaySectionHeader({
             style={({ pressed }) => [styles.deleteButton, pressed && styles.deleteButtonPressed]}
           >
             {deletePending ? (
-              <ActivityIndicator size="small" color="#DC2626" />
+              <AppLoader size="small" color="#DC2626" />
             ) : (
               <Text style={[styles.deleteText, { fontFamily: typography.fontFamilyMedium }]}>
                 {deleteLabel}

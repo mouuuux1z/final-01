@@ -5,12 +5,18 @@
   "description": "MYDoc - Medical Appointment Booking",
   "main": "expo/AppEntry.js",
   "scripts": {
-    "start": "concurrently -n backend,mobile,open -c blue,green,magenta \"npm run dev --prefix backend\" \"npm run web --prefix mobile\" \"node scripts/open-web.js\"",
-    "start:web": "concurrently -n mobile,open -c green,magenta \"npm run web --prefix mobile\" \"node scripts/open-web.js\"",
-    "start:clean": "powershell -ExecutionPolicy Bypass -File scripts/kill-ports.ps1 && npm start",
-    "start:web:clean": "powershell -ExecutionPolicy Bypass -File scripts/kill-ports.ps1 && npm run start:web",
+    "start": "powershell -ExecutionPolicy Bypass -File scripts/kill-ports.ps1 && concurrently -n backend,web -c blue,green \"npm run dev --prefix backend\" \"powershell -ExecutionPolicy Bypass -File scripts/serve-web-static.ps1\"",
+    "start:web": "powershell -ExecutionPolicy Bypass -File scripts/serve-web-static.ps1",
+    "start:clean": "powershell -ExecutionPolicy Bypass -File scripts/kill-ports.ps1 && concurrently -n backend,web -c blue,green \"npm run dev --prefix backend\" \"powershell -ExecutionPolicy Bypass -File scripts/serve-web-static.ps1 -Rebuild\"",
+    "start:web:clean": "powershell -ExecutionPolicy Bypass -File scripts/kill-ports.ps1 && powershell -ExecutionPolicy Bypass -File scripts/serve-web-static.ps1 -Rebuild",
     "mobile": "npm run start --prefix mobile",
-    "web": "npm run web --prefix mobile",
+    "web": "powershell -ExecutionPolicy Bypass -File scripts/kill-ports.ps1 && concurrently -n backend,web -c blue,green \"npm run dev --prefix backend\" \"powershell -ExecutionPolicy Bypass -File scripts/serve-web-static.ps1\"",
+    "web:build": "powershell -ExecutionPolicy Bypass -File scripts/serve-web-static.ps1 -Rebuild",
+    "web:prod": "powershell -ExecutionPolicy Bypass -File scripts/serve-web-production.ps1",
+    "web:prod:clean": "powershell -ExecutionPolicy Bypass -File scripts/serve-web-production.ps1 -Rebuild",
+    "audit:runtime": "powershell -ExecutionPolicy Bypass -File scripts/audit-runtime.ps1",
+    "web:dev": "powershell -ExecutionPolicy Bypass -File scripts/start-web.ps1",
+    "web:clear": "powershell -ExecutionPolicy Bypass -File scripts/start-web.ps1 -Clear",
     "expo:start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
@@ -18,9 +24,12 @@
     "db:seed": "npm run db:seed --prefix backend",
     "db:setup": "npm run db:generate --prefix backend && npm run db:push --prefix backend && npm run db:seed --prefix backend",
     "db:up": "docker compose up -d",
-    "db:push": "npm run db:push --prefix backend"
+    "db:push": "npm run db:push --prefix backend",
+    "build:apk": "powershell -ExecutionPolicy Bypass -File scripts/prebuild-apk.ps1",
+    "verify:queue": "powershell -ExecutionPolicy Bypass -File scripts/verify-queue-deployment.ps1"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/red-hat-display": "^0.4.1",
     "@expo-google-fonts/tajawal": "^0.4.1",
@@ -66,5 +75,9 @@
     "@types/react": "~18.3.12",
     "concurrently": "^9.2.3",
     "typescript": "^5.8.3"
+  },
+  "overrides": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   }
 }

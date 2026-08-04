@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { AppLoader } from '../../components/AppLoader';
+import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -72,7 +73,7 @@ export function ClinicDoctorDetailScreen({ navigation, route }: Props) {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center">
-        <ActivityIndicator color={UI.primary} />
+        <AppLoader color={UI.primary} />
       </View>
     );
   }
@@ -202,7 +203,7 @@ export function ClinicDoctorDetailScreen({ navigation, route }: Props) {
             style={statusMutation.isPending ? { opacity: 0.5 } : undefined}
           >
             {statusMutation.isPending ? (
-              <ActivityIndicator size="small" color="#DC2626" />
+              <AppLoader size="small" color="#DC2626" />
             ) : (
               <Text className="text-xs font-semibold text-red-600">{t('clinic.disableDoctor')}</Text>
             )}

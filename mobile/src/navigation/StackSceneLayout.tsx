@@ -21,7 +21,7 @@ function MeshScene({ children }: { children: ReactNode }) {
 
 /** Opaque mesh scene so transparent stack screens do not show screens beneath them */
 export function StackSceneLayout({ children, routeName }: StackSceneLayoutProps) {
-  if (routeName === MAIN_TAB_ROUTE) {
+  if (routeName === MAIN_TAB_ROUTE || routeName === 'Onboarding') {
     return <View style={styles.transparentRoot}>{children}</View>;
   }
 

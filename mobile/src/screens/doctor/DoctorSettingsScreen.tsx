@@ -12,6 +12,7 @@ import { Card } from '../../components/Card';
 import { changeLanguage, languages } from '../../i18n';
 import { useLogout } from '../../hooks/useLogout';
 import { SettingsAboutLink } from '../../components/settings/SettingsAboutLink';
+import { DeleteAccountButton } from '../../components/settings/DeleteAccountButton';
 import { useAuthStore } from '../../store/authStore';
 import { UI } from '../../theme/ui';
 import { getDoctorDisplayLocation } from '../../utils/doctorLocation';
@@ -150,6 +151,7 @@ export function DoctorSettingsScreen(_props: Props) {
         <Card className="mb-4" title={t('doctor.accountActions')}>
           <Text className="text-sm text-slate-500">{t('doctor.logoutHint')}</Text>
           <Button title={t('common.logout')} variant="outline" onPress={() => void handleLogout()} className="mt-4" />
+          <DeleteAccountButton className="mt-4 border-t border-slate-100 pt-4" />
         </Card>
       </View>
     </ScrollView>

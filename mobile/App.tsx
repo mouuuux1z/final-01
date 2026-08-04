@@ -6,22 +6,16 @@ import { enableScreens } from 'react-native-screens';
 
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
+import { useEffect, useRef } from 'react';
 import { useFonts } from 'expo-font';
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_700Bold,
-} from '@expo-google-fonts/inter';
-import {
-  Tajawal_400Regular,
-  Tajawal_500Medium,
-  Tajawal_700Bold,
-} from '@expo-google-fonts/tajawal';
+import { APP_FONT_SOURCES } from './src/theme/fonts';
+import { logRuntimeDiagnostics } from './src/constants/runtimeConfig';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
+import { FontVariables } from './src/components/FontVariables';
 import { LoadingScreen } from './src/components/LoadingScreen';
 import { ScreenBackground } from './src/components/ui/ScreenBackground';
 import { setUnauthorizedHandler, hydrateTokenCache } from './src/services/api';
@@ -36,6 +30,7 @@ function UnauthorizedHandler() {
 
   useEffect(() => {
     void hydrateTokenCache();
+    logRuntimeDiagnostics();
   }, []);
 
   useEffect(() => {
@@ -52,49 +47,43 @@ function UnauthorizedHandler() {
   return null;
 }
 
-export default function App() {
-  const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_700Bold,
-    Tajawal_400Regular,
-    Tajawal_500Medium,
-    Tajawal_700Bold,
-  });
-  const [fontTimeoutReached, setFontTimeoutReached] = useState(false);
+function MainContent() {
+  const skipFontGate = Platform.OS === 'web';
+  const [fontsLoaded, fontError] = useFonts(APP_FONT_SOURCES);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setFontTimeoutReached(true), 4000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const fontsReady = fontsLoaded || fontTimeoutReached || Boolean(fontError);
+  const fontsReady = skipFontGate || fontsLoaded || Boolean(fontError);
 
   if (!fontsReady) {
-    return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaProvider>
-          <ScreenBackground>
-            <LoadingScreen />
-          </ScreenBackground>
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
-    );
+    return <LoadingScreen />;
+  }
+
+  if (fontError && Platform.OS !== 'web') {
+    console.warn('[fonts] Failed to load custom fonts:', fontError);
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <ScreenBackground>
-            <UnauthorizedHandler />
-            <AppErrorBoundary>
-              <RootNavigator />
-            </AppErrorBoundary>
-            <StatusBar style="dark" />
-          </ScreenBackground>
-        </QueryClientProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <>
+      <UnauthorizedHandler />
+      <RootNavigator />
+      <StatusBar style="dark" />
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <AppErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+          <QueryClientProvider client={queryClient}>
+            <ScreenBackground>
+              <FontVariables>
+                <MainContent />
+              </FontVariables>
+            </ScreenBackground>
+          </QueryClientProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </AppErrorBoundary>
   );
 }

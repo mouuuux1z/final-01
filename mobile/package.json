@@ -6,8 +6,12 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web --port 8082 --clear",
-    "lint": "tsc --noEmit"
+    "web": "cd .. && expo start --web --port 8082",
+    "web:clear": "cd .. && expo start --web --port 8082 --clear",
+    "lint": "tsc --noEmit",
+    "build:apk": "cd .. && powershell -ExecutionPolicy Bypass -File scripts/prebuild-apk.ps1",
+    "build:aab": "eas build --platform android --profile production --non-interactive",
+    "build:android": "eas build --platform android --profile preview --non-interactive && eas build --platform android --profile production --non-interactive"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",

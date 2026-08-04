@@ -1,4 +1,5 @@
-import { ActivityIndicator, Switch, Text, View } from 'react-native';
+import { Switch, Text, View } from 'react-native';
+import { AppLoader } from '../AppLoader';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppIcon } from '../AppIcon';
@@ -34,13 +35,13 @@ export function ConversationReplyToggle({ chatApi, patientId, patientName }: Con
   if (isLoading) {
     return (
       <View className="items-center rounded-card bg-white/15 px-4 py-3">
-        <ActivityIndicator color="#FFFFFF" />
+        <AppLoader size="small" />
       </View>
     );
   }
 
   return (
-    <View className="flex-row items-center justify-between rounded-card border border-white/20 bg-white/15 px-4 py-3">
+    <View className="flex-row items-center justify-between overflow-hidden rounded-card border border-white/20 bg-white/15 px-4 py-3">
       <View className="mr-3 flex-1 flex-row items-center gap-3">
         <View className="h-10 w-10 items-center justify-center rounded-btn bg-white/20">
           <AppIcon name="messages" size={20} color="#FFFFFF" strokeWidth={2.25} />
@@ -56,7 +57,7 @@ export function ConversationReplyToggle({ chatApi, patientId, patientName }: Con
       </View>
 
       {settingsMutation.isPending ? (
-        <ActivityIndicator color="#FFFFFF" size="small" />
+        <AppLoader size="small" />
       ) : (
         <Switch
           value={repliesEnabled}

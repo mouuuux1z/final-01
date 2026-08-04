@@ -1,38 +1,44 @@
 import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppIcon } from './AppIcon';
-import { UI, cardShadowStyle } from '../theme/ui';
+import { UI } from '../theme/ui';
 import { useTypography } from '../hooks/useTypography';
 import { formatAppointmentDate } from '../utils/appointmentHelpers';
+import {
+  AppointmentNumberBadge,
+  formatAppointmentNumberLabel,
+  hasAppointmentNumber,
+} from './appointments/AppointmentNumberBadge';
 
 interface AppointmentCardHeaderProps {
-  index: number;
   title: string;
   date: string;
   time: string;
+  queueNumber?: number | null;
+  /** Fallback when queueNumber is not assigned yet */
+  index?: number;
   onChatPress?: () => void;
   chatLabel?: string;
 }
 
 export function AppointmentCardHeader({
-  index,
   title,
   date,
   time,
+  queueNumber,
+  index,
   onChatPress,
   chatLabel,
 }: AppointmentCardHeaderProps) {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const typography = useTypography();
+  const displayNumber = hasAppointmentNumber(queueNumber) ? queueNumber : index;
 
   return (
     <View className="flex-row items-start gap-3">
-      <View
-        className="h-10 min-w-[40px] items-center justify-center rounded-pill px-2"
-        style={{ backgroundColor: UI.primary, ...cardShadowStyle() }}
-      >
-        <Text className="text-base font-bold text-white">{index}</Text>
-      </View>
+      {displayNumber != null && displayNumber > 0 ? (
+        <AppointmentNumberBadge number={displayNumber} size="md" />
+      ) : null}
 
       <View className="flex-1">
         <Text
@@ -54,7 +60,14 @@ export function AppointmentCardHeader({
             <View className="h-8 w-8 items-center justify-center rounded-pill" style={{ backgroundColor: UI.input }}>
               <AppIcon name="clock" size={16} color={UI.primary} strokeWidth={2.5} />
             </View>
-            <Text className="text-base font-bold text-primary">{time}</Text>
+            <View>
+              {hasAppointmentNumber(queueNumber) ? (
+                <Text className="text-xs font-semibold text-primary">
+                  {formatAppointmentNumberLabel(queueNumber, t)}
+                </Text>
+              ) : null}
+              <Text className="text-base font-bold text-primary">{time}</Text>
+            </View>
           </View>
         </View>
       </View>

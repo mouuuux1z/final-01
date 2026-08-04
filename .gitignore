@@ -1,9 +1,12 @@
-﻿node_modules
+node_modules
 .env
 backend/.env
 mobile/.env
 .idea
 mobile/.expo
 dist
+.web-dist
+.web-dist-prod
+mobile/web-export-test
 *.log
 .DS_Store

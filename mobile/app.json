@@ -2,15 +2,15 @@
   "expo": {
     "name": "MYDoc",
     "slug": "mydoc",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#E8F4FC"
+      "backgroundColor": "#2558B8"
     },
     "ios": {
       "supportsTablet": true,
@@ -18,18 +18,19 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#E8F4FC"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#2558B8"
       },
       "package": "com.mydoc.appp",
-      "versionCode": 2,
+      "versionCode": 3,
       "usesCleartextTraffic": true
     },
     "web": {
-      "favicon": "./assets/favicon.png",
+      "favicon": "./assets/icon.png",
       "bundler": "metro"
     },
     "plugins": [
+      "expo-font",
       "expo-secure-store",
       "expo-localization",
       "expo-asset",
@@ -38,14 +39,20 @@
         "expo-build-properties",
         {
           "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0",
             "usesCleartextTraffic": true
           }
         }
-      ]
+      ],
+      "./plugins/withAndroidCleartext.js"
     ],
+    "owner": "moppl",
     "extra": {
       "apiUrl": "http://197.140.142.178/api",
       "socketUrl": "http://197.140.142.178",
+      "appTzOffsetMinutes": 60,
       "eas": {
         "projectId": "9900ac58-1334-464b-ab3e-8b6335978d3f"
       }

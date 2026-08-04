@@ -1,4 +1,5 @@
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
+import { AppLoader } from '../../components/AppLoader';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import type { CompositeScreenProps } from '@react-navigation/native';
@@ -90,7 +91,7 @@ export function ClinicDoctorsScreen({ navigation }: Props) {
       </View>
       {isLoading ? (
         <View className="mt-10 items-center">
-          <ActivityIndicator color={UI.primary} />
+          <AppLoader color={UI.primary} />
           <Text className="mt-3 text-sm text-on-sky-muted">{t('common.loading')}</Text>
         </View>
       ) : isError ? (

@@ -10,6 +10,7 @@ import { Card } from '../../components/Card';
 import { changeLanguage, languages } from '../../i18n';
 import { useLogout } from '../../hooks/useLogout';
 import { SettingsAboutLink } from '../../components/settings/SettingsAboutLink';
+import { DeleteAccountButton } from '../../components/settings/DeleteAccountButton';
 import { useAuthStore } from '../../store/authStore';
 import type { ClinicUser } from '../../types';
 import type { ClinicTabParamList } from '../../navigation/ClinicTabs';
@@ -92,7 +93,10 @@ export function ClinicSettingsScreen(_props: Props) {
 
         <SettingsAboutLink onPress={() => navigation.navigate('About')} />
 
-        <Button title={t('common.logout')} variant="outline" onPress={() => void handleLogout()} />
+        <Card className="mb-4 mt-4" title={t('doctor.accountActions')}>
+          <Button title={t('common.logout')} variant="outline" onPress={() => void handleLogout()} />
+          <DeleteAccountButton className="mt-4 border-t border-slate-100 pt-4" />
+        </Card>
       </View>
     </ScrollView>
   );

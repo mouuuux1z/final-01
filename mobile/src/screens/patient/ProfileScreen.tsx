@@ -8,6 +8,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { AppIcon } from '../../components/AppIcon';
 import { Button } from '../../components/Button';
 import { SettingsAboutLink } from '../../components/settings/SettingsAboutLink';
+import { DeleteAccountButton } from '../../components/settings/DeleteAccountButton';
 import { ScreenShell } from '../../components/ui/ScreenShell';
 import { UI } from '../../theme/ui';
 import { changeLanguage, languages } from '../../i18n';
@@ -110,6 +111,11 @@ export function ProfileScreen(_props: Props) {
       </ProfileCard>
 
       <Button title={t('common.logout')} variant="outline" onPress={() => void handleLogout()} />
+
+      <ProfileCard className="mt-4">
+        <Text className="mb-3 text-base font-bold" style={{ color: UI.text.primary }}>{t('doctor.accountActions')}</Text>
+        <DeleteAccountButton />
+      </ProfileCard>
     </ScreenShell>
   );
 }

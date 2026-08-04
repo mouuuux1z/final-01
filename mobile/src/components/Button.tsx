@@ -1,15 +1,6 @@
 import { useRef } from 'react';
-import {
-  ActivityIndicator,
-  Animated,
-  Easing,
-  Platform,
-  Pressable,
-  Text,
-  type PressableProps,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { AppLoader } from './AppLoader';
+import { Animated, Easing, Platform, Pressable, Text, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import { UI, activeGlowStyle } from '../theme/ui';
 import { useTypography } from '../hooks/useTypography';
 
@@ -97,7 +88,7 @@ export function Button({
         ]}
       >
         {loading ? (
-          <ActivityIndicator color={textColor[variant]} />
+          <AppLoader size="small" />
         ) : (
           <Text
             className="text-center text-base"

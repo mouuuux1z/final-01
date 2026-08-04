@@ -14,6 +14,26 @@ import notificationRoutes from '../modules/notifications/notifications.routes.js
 
 const router = Router();
 
+/** Used by /health and mobile clients to detect queue API availability on the server. */
+export const API_FEATURES = {
+  liveQueue: true,
+} as const;
+
+router.get('/health/queue', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    data: {
+      liveQueue: API_FEATURES.liveQueue,
+      routes: {
+        doctorToday: '/api/doctor/me/queue/today',
+        doctorStart: '/api/doctor/me/queue/start',
+        doctorNext: '/api/doctor/me/queue/next',
+        appointmentStatus: '/api/appointments/:id/queue-status',
+      },
+    },
+  });
+});
+
 router.use('/auth', authRoutes);
 router.use('/doctors', publicDoctorRoutes);
 router.use('/doctor', doctorRouter);

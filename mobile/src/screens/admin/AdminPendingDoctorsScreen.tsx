@@ -1,4 +1,5 @@
-import { ActivityIndicator, FlatList, Linking, Pressable, Text, View } from 'react-native';
+import { FlatList, Linking, Pressable, Text, View } from 'react-native';
+import { AppLoader } from '../../components/AppLoader';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -55,7 +56,7 @@ export function AdminPendingDoctorsScreen({ navigation }: Props) {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator className="mt-10" color={UI.primary} />
+        <AppLoader className="mt-10" color={UI.primary} />
       ) : (
         <FlatList
           data={data ?? []}

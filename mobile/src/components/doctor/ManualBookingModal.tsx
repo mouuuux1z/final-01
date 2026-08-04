@@ -1,9 +1,11 @@
-import { ActivityIndicator, I18nManager, Pressable, ScrollView, Text, View } from 'react-native';
+import { I18nManager, Pressable, ScrollView, Text, View } from 'react-native';
+import { AppLoader } from '../AppLoader';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppModal, appModalStyles } from '../AppModal';
 import { Button } from '../Button';
 import { Input } from '../Input';
+import { DateDayPicker } from '../DateDayPicker';
 import { getApiErrorMessage } from '../../services/api';
 import { getAppointmentDateKey, getDayChipLabels } from '../../utils/appointmentHelpers';
 import type { DoctorAvailabilitySlot } from '../../types';
@@ -168,101 +170,88 @@ export function ManualBookingModal({
           ))}
         </View>
 
-        <ScrollView
-          style={appModalStyles.scroll}
-          contentContainerStyle={appModalStyles.scrollContent}
-          showsVerticalScrollIndicator
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled
-        >
-          {step === 1 ? (
-            <>
-              <Input label={t('doctor.patientName')} value={patientName} onChangeText={setPatientName} />
-              <Input
-                label={t('auth.phone')}
-                value={patientPhone}
-                onChangeText={setPatientPhone}
-                keyboardType="phone-pad"
-                placeholder={t('auth.phoneHint')}
-              />
-              <Input
-                label={t('appointments.notes')}
-                value={notes}
-                onChangeText={setNotes}
-                multiline
-                numberOfLines={3}
-                className="min-h-[80px]"
-              />
-              {submitError ? (
-                <Text className="mb-4 rounded-btn bg-red-50 px-3 py-2 text-sm text-error">{submitError}</Text>
-              ) : null}
-              <Button title={t('doctor.manualBookingNext')} onPress={goToSlotStep} disabled={!patientName.trim()} />
-            </>
-          ) : (
-            <>
-              <Text
-                className="mb-1 text-sm font-semibold text-slate-700"
-                style={{ textAlign: isRtl ? 'right' : 'left' }}
-              >
-                {t('doctor.manualBookingSelectSlotHint')}
-              </Text>
-              <Text
-                className="mb-4 text-xs text-slate-500"
-                style={{ textAlign: isRtl ? 'right' : 'left' }}
-              >
-                {patientName.trim()}
-              </Text>
+        {step === 1 ? (
+          <ScrollView
+            style={appModalStyles.scroll}
+            contentContainerStyle={appModalStyles.scrollContent}
+            showsVerticalScrollIndicator
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled
+          >
+            <Input label={t('doctor.patientName')} value={patientName} onChangeText={setPatientName} />
+            <Input
+              label={t('auth.phone')}
+              value={patientPhone}
+              onChangeText={setPatientPhone}
+              keyboardType="phone-pad"
+              placeholder={t('auth.phoneHint')}
+            />
+            <Input
+              label={t('appointments.notes')}
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={3}
+              className="min-h-[80px]"
+            />
+            {submitError ? (
+              <Text className="mb-4 rounded-btn bg-red-50 px-3 py-2 text-sm text-error">{submitError}</Text>
+            ) : null}
+            <Button title={t('doctor.manualBookingNext')} onPress={goToSlotStep} disabled={!patientName.trim()} />
+          </ScrollView>
+        ) : (
+          <>
+            <Text
+              className="mb-1 text-sm font-semibold text-slate-700"
+              style={{ textAlign: isRtl ? 'right' : 'left' }}
+            >
+              {t('doctor.manualBookingSelectSlotHint')}
+            </Text>
+            <Text
+              className="mb-4 text-xs text-slate-500"
+              style={{ textAlign: isRtl ? 'right' : 'left' }}
+            >
+              {patientName.trim()}
+            </Text>
 
-              {slotsLoading ? (
-                <ActivityIndicator color={UI.primary} className="mb-4" />
-              ) : slotsByDate.length === 0 ? (
+            {slotsLoading ? (
+              <AppLoader color={UI.primary} className="mb-4" />
+            ) : slotsByDate.length === 0 ? (
+              <Text
+                className="mb-4 text-sm text-slate-500"
+                style={{ textAlign: isRtl ? 'right' : 'left' }}
+              >
+                {t('doctor.noAvailableSlots')}
+              </Text>
+            ) : (
+              <>
                 <Text
-                  className="mb-4 text-sm text-slate-500"
+                  className="mb-3 text-sm font-semibold text-slate-700"
                   style={{ textAlign: isRtl ? 'right' : 'left' }}
                 >
-                  {t('doctor.noAvailableSlots')}
+                  {t('appointments.selectDate')}
                 </Text>
-              ) : (
-                <>
-                  <Text
-                    className="mb-3 text-sm font-semibold text-slate-700"
-                    style={{ textAlign: isRtl ? 'right' : 'left' }}
-                  >
-                    {t('appointments.selectDate')}
-                  </Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    nestedScrollEnabled
-                    className="mb-4"
-                    contentContainerClassName="gap-2 pr-2"
-                  >
-                    {slotsByDate.map((day) => {
-                      const selected = selectedDate === day.date;
-                      const labels = getDayChipLabels(day.date, t, i18n.language);
-                      return (
-                        <Pressable
-                          key={day.date}
-                          onPress={() => {
-                            setSelectedDate(day.date);
-                            setSelectedSlotId(null);
-                          }}
-                          className={`min-w-[76px] rounded-card border px-3 py-2.5 ${selected ? 'border-primary bg-primary' : 'border-slate-200 bg-white'}`}
-                        >
-                          <Text className={`text-center text-lg font-bold ${selected ? 'text-white' : 'text-slate-900'}`}>
-                            {labels.dayNumber}
-                          </Text>
-                          <Text className={`text-center text-xs font-semibold ${selected ? 'text-blue-100' : 'text-slate-600'}`}>
-                            {labels.weekday}
-                          </Text>
-                          <Text className={`text-center text-[10px] ${selected ? 'text-blue-100' : 'text-slate-400'}`}>
-                            {labels.month}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </ScrollView>
+                <DateDayPicker
+                  className="mb-4"
+                  dates={slotsByDate.map((day) => day.date)}
+                  selectedDate={selectedDate}
+                  onSelectDate={(date) => {
+                    setSelectedDate(date);
+                    setSelectedSlotId(null);
+                  }}
+                />
+              </>
+            )}
 
+            <ScrollView
+              style={appModalStyles.scroll}
+              contentContainerStyle={appModalStyles.scrollContent}
+              showsVerticalScrollIndicator
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled
+            >
+              {!slotsLoading && slotsByDate.length > 0 ? (
+                <>
                   <Text
                     className="mb-3 text-sm font-semibold text-slate-700"
                     style={{ textAlign: isRtl ? 'right' : 'left' }}
@@ -299,7 +288,7 @@ export function ManualBookingModal({
                     </View>
                   )}
                 </>
-              )}
+              ) : null}
 
               {submitError ? (
                 <Text className="mb-4 rounded-btn bg-red-50 px-3 py-2 text-sm text-error">{submitError}</Text>
@@ -314,9 +303,9 @@ export function ManualBookingModal({
                 />
                 <Button title={t('common.back')} variant="outline" onPress={() => setStep(1)} />
               </View>
-            </>
-          )}
-        </ScrollView>
+            </ScrollView>
+          </>
+        )}
       </View>
     </AppModal>
   );

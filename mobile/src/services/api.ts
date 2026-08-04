@@ -20,6 +20,8 @@ const AUTH_PUBLIC_PATHS = [
   '/auth/register',
   '/auth/register/doctor',
   '/auth/register/clinic',
+  '/auth/forgot-password',
+  '/auth/reset-password',
   '/auth/logout',
   '/auth/me',
 ];
@@ -72,10 +74,18 @@ export async function hydrateTokenCache(): Promise<void> {
 
 export const api = axios.create({
   baseURL: API_URL,
-  timeout: 15000,
+  timeout: 30_000,
 });
 
+let loggedFirstRequest = false;
+
 api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  if (!loggedFirstRequest) {
+    loggedFirstRequest = true;
+    const path = config.url ?? '/';
+    console.log(`[MYDoc API] baseURL=${API_URL} firstRequest=${path}`);
+  }
+
   const isFormData =
     typeof FormData !== 'undefined' &&
     config.data instanceof FormData;
@@ -109,6 +119,19 @@ api.interceptors.response.use(
   },
 );
 
+function collectValidationMessages(value: unknown): string[] {
+  if (typeof value === 'string' && value.trim()) {
+    return [value];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap(collectValidationMessages);
+  }
+  if (typeof value === 'object' && value !== null) {
+    return Object.values(value).flatMap(collectValidationMessages);
+  }
+  return [];
+}
+
 export function getApiErrorMessage(error: unknown, fallback?: string): string {
   const fallbackMessage = fallback ?? getLocalizedApiFallback();
 
@@ -120,12 +143,10 @@ export function getApiErrorMessage(error: unknown, fallback?: string): string {
       return getLocalizedNetworkUnreachableMessage();
     }
     const data = error.response?.data as
-      | { message?: string; errors?: Record<string, string[] | undefined> }
+      | { message?: string; errors?: Record<string, unknown> }
       | undefined;
     if (data?.errors) {
-      const fieldMessages = Object.values(data.errors)
-        .flat()
-        .filter(Boolean) as string[];
+      const fieldMessages = collectValidationMessages(data.errors);
       if (fieldMessages.length > 0) {
         return fieldMessages.map(translateApiMessage).join('\n');
       }
