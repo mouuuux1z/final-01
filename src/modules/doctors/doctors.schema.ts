@@ -2,16 +2,28 @@ import { z } from 'zod';
 import { DayOfWeek, EntityStatus } from '@prisma/client';
 import { normalizeTimeString, parseLocalDateInput, parseTimeToMinutes } from '../../utils/slotGenerator.js';
 
+function emptyToUndefined(value: unknown): unknown {
+  if (value === '' || value === null || value === undefined) return undefined;
+  return value;
+}
+
+function optionalCoercedInt(min: number, max: number) {
+  return z.preprocess(emptyToUndefined, z.coerce.number().int().min(min).max(max).optional());
+}
+
 const timeStringSchema = z
   .string()
   .min(1)
   .transform((value) => normalizeTimeString(value))
   .pipe(z.string().regex(/^\d{2}:\d{2}$/, 'Time must be in HH:MM format'));
 
-const optionalTimeStringSchema = z
-  .string()
-  .optional()
-  .transform((value) => (value?.trim() ? normalizeTimeString(value.trim()) : undefined));
+const optionalTimeStringSchema = z.preprocess(
+  emptyToUndefined,
+  z
+    .string()
+    .optional()
+    .transform((value) => (value?.trim() ? normalizeTimeString(value.trim()) : undefined)),
+);
 
 export const searchDoctorsSchema = z.object({
   q: z.string().optional(),
@@ -37,13 +49,50 @@ export const adminUpdateDoctorSchema = updateDoctorSchema.extend({
   disableReason: z.string().max(1000).nullable().optional(),
 });
 
-export const createScheduleSchema = z.object({
-  dayOfWeek: z.nativeEnum(DayOfWeek),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/),
+const scheduleTimeFieldsSchema = z.object({
+  startTime: timeStringSchema,
+  endTime: timeStringSchema,
 });
 
-export const updateScheduleSchema = createScheduleSchema.partial();
+function refineScheduleTimeRange<T extends z.ZodTypeAny>(schema: T) {
+  return schema.refine(
+    (data: { startTime: string; endTime: string }) =>
+      parseTimeToMinutes(data.startTime) < parseTimeToMinutes(data.endTime),
+    { message: 'End time must be after start time' },
+  );
+}
+
+export const createScheduleSchema = refineScheduleTimeRange(
+  scheduleTimeFieldsSchema.extend({
+    dayOfWeek: z.nativeEnum(DayOfWeek),
+  }),
+);
+
+export const updateScheduleSchema = z
+  .object({
+    startTime: timeStringSchema.optional(),
+    endTime: timeStringSchema.optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.startTime || !data.endTime) return true;
+      return parseTimeToMinutes(data.startTime) < parseTimeToMinutes(data.endTime);
+    },
+    { message: 'End time must be after start time' },
+  );
+
+export const syncWeeklySchedulesSchema = z.object({
+  days: z
+    .array(
+      refineScheduleTimeRange(
+        scheduleTimeFieldsSchema.extend({
+          dayOfWeek: z.nativeEnum(DayOfWeek),
+        }),
+      ),
+    )
+    .min(1)
+    .max(7),
+});
 
 export const createAvailabilitySlotSchema = z.object({
   date: z.coerce.date(),
@@ -111,6 +160,25 @@ export const generateRecurringAvailabilitySchema = z
   );
 
 export type GenerateRecurringAvailabilityInput = z.infer<typeof generateRecurringAvailabilitySchema>;
+
+export const generateFromWeeklyScheduleSchema = z
+  .object({
+    slotDurationMinutes: optionalCoercedInt(5, 240).default(30),
+    gapMinutes: optionalCoercedInt(0, 120).default(0),
+    breakStart: optionalTimeStringSchema,
+    breakEnd: optionalTimeStringSchema,
+    daysAhead: optionalCoercedInt(1, 84).default(7),
+  })
+  .refine(
+    (data) => {
+      const hasBreakStart = Boolean(data.breakStart);
+      const hasBreakEnd = Boolean(data.breakEnd);
+      return hasBreakStart === hasBreakEnd;
+    },
+    { message: 'Break start and end must both be provided', path: ['breakStart'] },
+  );
+
+export type GenerateFromWeeklyScheduleInput = z.infer<typeof generateFromWeeklyScheduleSchema>;
 
 export const availabilityQuerySchema = z.object({
   date: z.preprocess(parseLocalDateInput, z.date().optional()),

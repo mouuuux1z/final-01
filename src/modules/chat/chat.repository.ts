@@ -36,10 +36,27 @@ export class ChatRepository {
 
   async markAsRead(doctorId: string, patientId: string, readerType: SenderType) {
     const senderType = readerType === SenderType.DOCTOR ? SenderType.PATIENT : SenderType.DOCTOR;
-    return prisma.chatMessage.updateMany({
+    const readAt = new Date();
+    const unread = await prisma.chatMessage.findMany({
       where: { doctorId, patientId, senderType, readAt: null },
-      data: { readAt: new Date() },
+      select: { id: true },
     });
+
+    if (!unread.length) {
+      return { count: 0, messageIds: [] as string[], readAt: null as Date | null, senderType };
+    }
+
+    await prisma.chatMessage.updateMany({
+      where: { doctorId, patientId, senderType, readAt: null },
+      data: { readAt },
+    });
+
+    return {
+      count: unread.length,
+      messageIds: unread.map((item) => item.id),
+      readAt,
+      senderType,
+    };
   }
 
   async getDoctorConversations(doctorId: string, pagination: PaginationParams) {

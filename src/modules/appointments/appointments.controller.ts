@@ -64,6 +64,28 @@ export class AppointmentsController {
     );
     sendSuccess(res, appointment, 'Attendance updated');
   });
+
+  createPrivate = asyncHandler(async (req: Request, res: Response) => {
+    const appointment = await appointmentsService.createPrivateAppointment(req.user!.id, req.body);
+    sendSuccess(res, appointment, 'Private appointment created', 201);
+  });
+
+  updatePrivate = asyncHandler(async (req: Request, res: Response) => {
+    const appointment = await appointmentsService.updatePrivateAppointment(
+      parseIdParam(req.params.id, 'id'),
+      req.user!.id,
+      req.body,
+    );
+    sendSuccess(res, appointment, 'Private appointment updated');
+  });
+
+  deletePrivate = asyncHandler(async (req: Request, res: Response) => {
+    const result = await appointmentsService.deletePrivateAppointment(
+      parseIdParam(req.params.id, 'id'),
+      req.user!.id,
+    );
+    sendSuccess(res, result, 'Private appointment deleted');
+  });
 }
 
 export const appointmentsController = new AppointmentsController();

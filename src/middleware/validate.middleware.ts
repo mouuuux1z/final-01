@@ -3,6 +3,10 @@ import type { ZodSchema } from 'zod';
 
 type RequestPart = 'body' | 'query' | 'params';
 
+function isStructuredArray(values: unknown[]): boolean {
+  return values.some((item) => typeof item === 'object' && item !== null);
+}
+
 function normalizeRequestPart(value: Request[RequestPart]): Request[RequestPart] {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return value;
@@ -10,7 +14,12 @@ function normalizeRequestPart(value: Request[RequestPart]): Request[RequestPart]
 
   const normalized: Record<string, unknown> = {};
   for (const [key, partValue] of Object.entries(value)) {
-    normalized[key] = Array.isArray(partValue) ? partValue[0] : partValue;
+    if (Array.isArray(partValue)) {
+      // Keep JSON arrays like `{ days: [{ ... }] }`; collapse duplicate query params.
+      normalized[key] = isStructuredArray(partValue) ? partValue : partValue[0];
+      continue;
+    }
+    normalized[key] = partValue;
   }
   return normalized as Request[RequestPart];
 }

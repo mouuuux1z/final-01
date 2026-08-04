@@ -4,14 +4,22 @@ import { buildPaginationMeta, parsePagination } from '../../utils/pagination.js'
 import {
   addDaysLocal,
   dateToDayOfWeek,
+  formatDateKey,
   generateSlotTimes,
   getAppointmentDateTime,
+  isTimeInsideRange,
   normalizeDateOnly,
+  normalizeTimeString,
   parseTimeToMinutes,
   slotsOverlap,
 } from '../../utils/slotGenerator.js';
 import { doctorsRepository } from './doctors.repository.js';
-import type { GenerateAvailabilityInput, GenerateRecurringAvailabilityInput } from './doctors.schema.js';
+import { appointmentsRepository } from '../appointments/appointments.repository.js';
+import type {
+  GenerateAvailabilityInput,
+  GenerateFromWeeklyScheduleInput,
+  GenerateRecurringAvailabilityInput,
+} from './doctors.schema.js';
 
 export class DoctorsService {
   async search(query: Record<string, unknown>) {
@@ -105,6 +113,29 @@ export class DoctorsService {
     }
   }
 
+  async syncWeeklySchedules(
+    doctorId: string,
+    days: Array<{ dayOfWeek: string; startTime: string; endTime: string }>,
+  ) {
+    const enabledDays = new Set(days.map((day) => day.dayOfWeek));
+    const existing = await doctorsRepository.getSchedules(doctorId);
+
+    for (const day of days) {
+      await doctorsRepository.upsertScheduleByDay(doctorId, day.dayOfWeek, {
+        startTime: day.startTime,
+        endTime: day.endTime,
+      });
+    }
+
+    for (const schedule of existing) {
+      if (!enabledDays.has(schedule.dayOfWeek)) {
+        await doctorsRepository.deleteSchedule(schedule.id, doctorId);
+      }
+    }
+
+    return doctorsRepository.getSchedules(doctorId);
+  }
+
   async getAvailability(doctorId: string, filters: {
     date?: Date;
     from?: Date;
@@ -138,9 +169,21 @@ export class DoctorsService {
       limit: 500,
     });
 
+    const privateAppts = await appointmentsRepository.findActivePrivateAppointmentsForRange(
+      doctorId,
+      from,
+      to,
+    );
+
     const now = new Date();
-    const activeSlots = slots.filter(
-      (slot) => slot.isBooked || getAppointmentDateTime(slot.date, slot.time) >= now,
+    const activeSlots = this.excludeSlotsInsidePrivateRanges(
+      slots.filter((slot) => {
+        if (!slot.isBooked && getAppointmentDateTime(slot.date, slot.time) < now) {
+          return false;
+        }
+        return true;
+      }),
+      privateAppts,
     );
 
     if (filters.availableOnly) {
@@ -178,10 +221,21 @@ export class DoctorsService {
     }
 
     const existing = await doctorsRepository.getAvailabilitySlotsForDate(doctorId, date);
+    const privateAppts = await appointmentsRepository.findActivePrivateAppointmentsForDate(doctorId, date);
     const duration = input.slotDurationMinutes;
 
     const filteredTimes = candidateTimes.filter((candidate) => {
       const candidateStart = parseTimeToMinutes(candidate);
+
+      for (const priv of privateAppts) {
+        const privStart = parseTimeToMinutes(normalizeTimeString(priv.time));
+        const privEnd = priv.endTime
+          ? parseTimeToMinutes(normalizeTimeString(priv.endTime))
+          : privStart + 15;
+        if (candidateStart >= privStart && candidateStart < privEnd) {
+          return false;
+        }
+      }
 
       for (const slot of existing) {
         const existingStart = parseTimeToMinutes(slot.time);
@@ -241,13 +295,26 @@ export class DoctorsService {
     });
     const existingByDateKey = new Map<string, typeof existingInRange>();
     for (const slot of existingInRange) {
-      const key = normalizeDateOnly(slot.date).toISOString();
+      const key = formatDateKey(slot.date);
       const bucket = existingByDateKey.get(key);
       if (bucket) {
         bucket.push(slot);
       } else {
         existingByDateKey.set(key, [slot]);
       }
+    }
+
+    const privateApptsInRange = await appointmentsRepository.findActivePrivateAppointmentsForRange(
+      doctorId,
+      today,
+      rangeEnd,
+    );
+    const privateByDateKey = new Map<string, typeof privateApptsInRange>();
+    for (const priv of privateApptsInRange) {
+      const key = formatDateKey(priv.date);
+      const bucket = privateByDateKey.get(key) ?? [];
+      bucket.push(priv);
+      privateByDateKey.set(key, bucket);
     }
 
     for (let offset = 0; offset < weeksAhead * 7; offset++) {
@@ -257,11 +324,20 @@ export class DoctorsService {
       if (!selectedDays.has(dayOfWeek)) continue;
 
       const normalizedDate = normalizeDateOnly(date);
-      const existing = existingByDateKey.get(normalizedDate.toISOString()) ?? [];
+      const dateKey = formatDateKey(normalizedDate);
+      const existing = existingByDateKey.get(dateKey) ?? [];
+      const datePrivates = privateByDateKey.get(dateKey) ?? [];
       const duration = input.slotDurationMinutes;
 
       const filteredTimes = candidateTimes.filter((candidate) => {
         const candidateStart = parseTimeToMinutes(candidate);
+        for (const priv of datePrivates) {
+          const privStart = parseTimeToMinutes(priv.time);
+          const privEnd = priv.endTime ? parseTimeToMinutes(priv.endTime) : privStart + 15;
+          if (candidateStart >= privStart && candidateStart < privEnd) {
+            return false;
+          }
+        }
         for (const slot of existing) {
           const existingStart = parseTimeToMinutes(slot.time);
           if (slot.time === candidate || slotsOverlap(candidateStart, duration, existingStart, duration)) {
@@ -287,30 +363,182 @@ export class DoctorsService {
     };
   }
 
+  async generateFromWeeklySchedule(doctorId: string, input: GenerateFromWeeklyScheduleInput) {
+    const schedules = await doctorsRepository.getSchedules(doctorId);
+    if (schedules.length === 0) {
+      throw new AppError('No weekly schedule configured', 400);
+    }
+
+    const scheduleByDay = new Map(schedules.map((schedule) => [schedule.dayOfWeek, schedule]));
+    const today = normalizeDateOnly(new Date());
+    const rangeDays = input.daysAhead ?? 7;
+    const rangeEnd = addDaysLocal(today, rangeDays);
+    const duration = input.slotDurationMinutes ?? 30;
+
+    const existingInRange = await doctorsRepository.getAvailabilitySlots(doctorId, {
+      from: today,
+      to: rangeEnd,
+      limit: 5000,
+    });
+    const existingByDateKey = new Map<string, typeof existingInRange>();
+    for (const slot of existingInRange) {
+      const key = formatDateKey(slot.date);
+      const bucket = existingByDateKey.get(key);
+      if (bucket) {
+        bucket.push(slot);
+      } else {
+        existingByDateKey.set(key, [slot]);
+      }
+    }
+
+    const privateApptsInRange = await appointmentsRepository.findActivePrivateAppointmentsForRange(
+      doctorId,
+      today,
+      rangeEnd,
+    );
+    const privateByDateKey = new Map<string, typeof privateApptsInRange>();
+    for (const priv of privateApptsInRange) {
+      const key = formatDateKey(priv.date);
+      const bucket = privateByDateKey.get(key) ?? [];
+      bucket.push(priv);
+      privateByDateKey.set(key, bucket);
+    }
+
+    let totalCreated = 0;
+    let totalSkipped = 0;
+    let daysProcessed = 0;
+
+    for (let offset = 0; offset < rangeDays; offset++) {
+      const date = addDaysLocal(today, offset);
+      const dayOfWeek = dateToDayOfWeek(date);
+      const schedule = scheduleByDay.get(dayOfWeek);
+      if (!schedule) continue;
+
+      const candidateTimes = generateSlotTimes({
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        slotDurationMinutes: duration,
+        gapMinutes: input.gapMinutes ?? 0,
+        breakStart: input.breakStart,
+        breakEnd: input.breakEnd,
+      });
+
+      if (candidateTimes.length === 0) continue;
+
+      daysProcessed += 1;
+      const normalizedDate = normalizeDateOnly(date);
+      const dateKey = formatDateKey(normalizedDate);
+      const existing = existingByDateKey.get(dateKey) ?? [];
+      const datePrivates = privateByDateKey.get(dateKey) ?? [];
+
+      const filteredTimes = candidateTimes.filter((candidate) => {
+        const candidateStart = parseTimeToMinutes(candidate);
+        for (const priv of datePrivates) {
+          const privStart = parseTimeToMinutes(priv.time);
+          const privEnd = priv.endTime ? parseTimeToMinutes(priv.endTime) : privStart + 15;
+          if (candidateStart >= privStart && candidateStart < privEnd) {
+            return false;
+          }
+        }
+        for (const slot of existing) {
+          const existingStart = parseTimeToMinutes(slot.time);
+          if (slot.time === candidate || slotsOverlap(candidateStart, duration, existingStart, duration)) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      if (filteredTimes.length > 0) {
+        await doctorsRepository.createManyAvailabilitySlots(doctorId, normalizedDate, filteredTimes);
+        existing.push(...filteredTimes.map((time) => ({ time } as (typeof existing)[number])));
+        totalCreated += filteredTimes.length;
+      }
+      totalSkipped += candidateTimes.length - filteredTimes.length;
+    }
+
+    if (totalCreated === 0 && daysProcessed === 0) {
+      if (schedules.length === 0) {
+        throw new AppError('No weekly schedule configured', 400);
+      }
+      throw new AppError(
+        'No availability slots could be generated. Check that working hours are valid and end after start time.',
+        400,
+      );
+    }
+
+    return {
+      createdCount: totalCreated,
+      skippedCount: totalSkipped,
+      daysProcessed,
+      daysAhead: rangeDays,
+    };
+  }
+
   async getMyAvailability(
     doctorId: string,
     filters: { date?: Date; from?: Date; to?: Date; availableOnly?: boolean },
   ) {
     await this.purgeExpiredAvailabilitySlots(doctorId);
 
+    const today = normalizeDateOnly(new Date());
+    const from = filters.date
+      ? normalizeDateOnly(filters.date)
+      : filters.from
+        ? normalizeDateOnly(filters.from)
+        : today;
+    const to = filters.date
+      ? addDaysLocal(from, 1)
+      : filters.to
+        ? normalizeDateOnly(filters.to)
+        : addDaysLocal(today, 60);
+
     const slots = await doctorsRepository.getAvailabilitySlots(doctorId, {
-      date: filters.date ? normalizeDateOnly(filters.date) : undefined,
-      from: filters.from ? normalizeDateOnly(filters.from) : undefined,
-      to: filters.to ? normalizeDateOnly(filters.to) : undefined,
+      date: filters.date ? from : undefined,
+      from: filters.date ? undefined : from,
+      to: filters.date ? undefined : to,
       availableOnly: filters.availableOnly,
       limit: 500,
     });
 
+    const privateAppts = await appointmentsRepository.findActivePrivateAppointmentsForRange(
+      doctorId,
+      from,
+      to,
+    );
+
     const now = new Date();
-    const activeSlots = slots.filter(
+    let activeSlots = slots.filter(
       (slot) => slot.isBooked || getAppointmentDateTime(slot.date, slot.time) >= now,
     );
+    activeSlots = this.excludeSlotsInsidePrivateRanges(activeSlots, privateAppts);
 
     if (filters.availableOnly) {
       return activeSlots.filter((slot) => !slot.isBooked);
     }
 
     return activeSlots;
+  }
+
+  async listMyPatients(doctorId: string) {
+    return doctorsRepository.listPatientsForDoctor(doctorId);
+  }
+
+  private excludeSlotsInsidePrivateRanges<T extends { date: Date; time: string }>(
+    slots: T[],
+    privateAppts: Array<{ date: Date; time: string; endTime: string | null }>,
+  ): T[] {
+    return slots.filter((slot) => {
+      const slotDateKey = formatDateKey(slot.date);
+      const isInsidePrivate = privateAppts.some((priv) => {
+        if (formatDateKey(priv.date) !== slotDateKey) return false;
+        if (!priv.endTime) {
+          return normalizeTimeString(slot.time) === normalizeTimeString(priv.time);
+        }
+        return isTimeInsideRange(slot.time, priv.time, priv.endTime);
+      });
+      return !isInsidePrivate;
+    });
   }
 
   private async purgeExpiredAvailabilitySlots(doctorId: string) {

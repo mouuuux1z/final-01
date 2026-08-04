@@ -4,7 +4,7 @@ import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { uploadCertificate } from '../../middleware/upload.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authController } from './auth.controller.js';
-import { doctorRegisterMultipartSchema, clinicRegisterMultipartSchema, loginSchema, registerSchema } from './auth.schema.js';
+import { doctorRegisterMultipartSchema, clinicRegisterMultipartSchema, deleteAccountSchema, forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema } from './auth.schema.js';
 
 const router = Router();
 
@@ -24,7 +24,10 @@ router.post(
   authController.registerClinic,
 );
 router.post('/login', authRateLimit, validate(loginSchema), authController.login);
+router.post('/forgot-password', authRateLimit, validate(forgotPasswordSchema), authController.forgotPassword);
+router.post('/reset-password', authRateLimit, validate(resetPasswordSchema), authController.resetPassword);
 router.post('/logout', authMiddleware, authController.logout);
 router.get('/me', authMiddleware, authController.me);
+router.delete('/me', authMiddleware, validate(deleteAccountSchema), authController.deleteAccount);
 
 export default router;

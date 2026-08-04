@@ -13,6 +13,7 @@ import { appointmentsRepository } from '../appointments/appointments.repository.
 import { appointmentsService } from '../appointments/appointments.service.js';
 
 import { doctorsService } from '../doctors/doctors.service.js';
+import { queueService } from '../queue/queue.service.js';
 
 import { chatService } from '../chat/chat.service.js';
 
@@ -215,6 +216,63 @@ export class ClinicsService {
     return doctorsService.getSchedules(doctorId);
   }
 
+  async createDoctorSchedule(
+    clinicId: string,
+    doctorId: string,
+    data: { dayOfWeek: string; startTime: string; endTime: string },
+  ) {
+    await this.assertDoctorInClinic(clinicId, doctorId);
+    return doctorsService.createSchedule(doctorId, data);
+  }
+
+  async updateDoctorSchedule(
+    clinicId: string,
+    doctorId: string,
+    scheduleId: string,
+    data: { startTime?: string; endTime?: string },
+  ) {
+    await this.assertDoctorInClinic(clinicId, doctorId);
+    return doctorsService.updateSchedule(scheduleId, doctorId, data);
+  }
+
+  async deleteDoctorSchedule(clinicId: string, doctorId: string, scheduleId: string) {
+    await this.assertDoctorInClinic(clinicId, doctorId);
+    return doctorsService.deleteSchedule(scheduleId, doctorId);
+  }
+
+  async syncDoctorWeeklySchedules(
+    clinicId: string,
+    doctorId: string,
+    days: Array<{ dayOfWeek: string; startTime: string; endTime: string }>,
+  ) {
+    await this.assertDoctorInClinic(clinicId, doctorId);
+    return doctorsService.syncWeeklySchedules(doctorId, days);
+  }
+
+  async getDoctorTodayQueue(clinicId: string, doctorId: string) {
+    await this.assertDoctorInClinic(clinicId, doctorId);
+    return queueService.getTodayQueue(doctorId);
+  }
+
+  async startDoctorReception(clinicId: string, doctorId: string) {
+    await this.assertDoctorInClinic(clinicId, doctorId);
+    return queueService.startReception(doctorId);
+  }
+
+  async advanceDoctorQueue(clinicId: string, doctorId: string) {
+    await this.assertDoctorInClinic(clinicId, doctorId);
+    return queueService.advanceQueue(doctorId);
+  }
+
+  async generateDoctorFromWeeklySchedule(
+    clinicId: string,
+    doctorId: string,
+    input: Parameters<typeof doctorsService.generateFromWeeklySchedule>[1],
+  ) {
+    await this.assertDoctorInClinic(clinicId, doctorId);
+    return doctorsService.generateFromWeeklySchedule(doctorId, input);
+  }
+
   async generateDoctorRecurringAvailability(
     clinicId: string,
     doctorId: string,
@@ -252,6 +310,11 @@ export class ClinicsService {
     return appointmentsService.doctorManualBook(doctorId, data);
   }
 
+  async listDoctorPatients(clinicId: string, doctorId: string) {
+    await this.assertDoctorInClinic(clinicId, doctorId);
+    return doctorsService.listMyPatients(doctorId);
+  }
+
   async acceptDoctorAppointment(clinicId: string, doctorId: string, appointmentId: string) {
     await this.assertDoctorInClinic(clinicId, doctorId);
     return appointmentsService.accept(appointmentId, doctorId);
@@ -287,12 +350,14 @@ export class ClinicsService {
     doctorId: string,
     patientId: string,
     message: string,
+    fileUrl?: string,
   ) {
     await this.assertDoctorInClinic(clinicId, doctorId);
     return chatService.sendMessage(
       { doctorId, patientId, message },
       doctorId,
       UserType.DOCTOR,
+      fileUrl,
     );
   }
 

@@ -55,6 +55,28 @@ export class AuthController {
     const user = await authService.getProfile(req.user!.id, req.user!.userType);
     sendSuccess(res, user);
   });
+
+  forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.forgotPassword(req.body.email, req.body.language);
+    sendSuccess(res, result, result.message);
+  });
+
+  resetPassword = asyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.resetPassword(req.body.email, req.body.code, req.body.password);
+    sendSuccess(res, result, result.message);
+  });
+
+  deleteAccount = asyncHandler(async (req: Request, res: Response) => {
+    const header = req.headers.authorization;
+    const sessionToken = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
+    const result = await authService.deleteAccount(
+      req.user!.id,
+      req.user!.userType,
+      req.body.password,
+      sessionToken,
+    );
+    sendSuccess(res, result, result.message);
+  });
 }
 
 export const authController = new AuthController();

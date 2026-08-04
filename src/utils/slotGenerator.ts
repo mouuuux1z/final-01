@@ -1,4 +1,7 @@
 import type { DayOfWeek } from '@prisma/client';
+import { APP_TZ_OFFSET_MINUTES } from '../config/timezone.js';
+
+export const DEFAULT_SLOT_DURATION_MINUTES = 30;
 
 export function parseTimeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);
@@ -93,7 +96,25 @@ export function dateToDayOfWeek(date: Date): DayOfWeek {
 }
 
 export function normalizeDateOnly(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0, 0);
+  const key = formatDateKey(date);
+  const match = key.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return date;
+  return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12, 0, 0, 0));
+}
+
+/** Stable YYYY-MM-DD key for PostgreSQL DATE values (UTC calendar day). */
+export function formatDateKey(date: Date): string {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export function isTimeInsideRange(time: string, rangeStart: string, rangeEnd: string): boolean {
+  const minute = parseTimeToMinutes(normalizeTimeString(time));
+  const start = parseTimeToMinutes(normalizeTimeString(rangeStart));
+  const end = parseTimeToMinutes(normalizeTimeString(rangeEnd));
+  return minute >= start && minute < end;
 }
 
 export function parseLocalDateInput(input: unknown): Date | undefined {
@@ -103,10 +124,18 @@ export function parseLocalDateInput(input: unknown): Date | undefined {
   }
 
   const str = String(input);
-  const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) {
-    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-    return normalizeDateOnly(date);
+  const dateOnlyMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnlyMatch) {
+    return new Date(
+      Date.UTC(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]), 12, 0, 0, 0),
+    );
+  }
+
+  const prefixMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (prefixMatch) {
+    return new Date(
+      Date.UTC(Number(prefixMatch[1]), Number(prefixMatch[2]) - 1, Number(prefixMatch[3]), 12, 0, 0, 0),
+    );
   }
 
   const parsed = new Date(str);
@@ -115,23 +144,78 @@ export function parseLocalDateInput(input: unknown): Date | undefined {
 }
 
 export function addDaysLocal(date: Date, days: number): Date {
-  const result = normalizeDateOnly(date);
-  result.setDate(result.getDate() + days);
-  return result;
+  const normalized = normalizeDateOnly(date);
+  return new Date(
+    Date.UTC(
+      normalized.getUTCFullYear(),
+      normalized.getUTCMonth(),
+      normalized.getUTCDate() + days,
+      12,
+      0,
+      0,
+      0,
+    ),
+  );
+}
+
+export function addMinutesToTime(time: string, minutes: number): string {
+  return formatMinutesToTime(parseTimeToMinutes(normalizeTimeString(time)) + minutes);
+}
+
+export function intervalsOverlap(startA: number, endA: number, startB: number, endB: number): boolean {
+  return startA < endB && endA > startB;
 }
 
 export function getAppointmentDateTime(date: Date, time: string): Date {
-  const source = new Date(date);
-  const appointmentAt = new Date(
-    source.getFullYear(),
-    source.getMonth(),
-    source.getDate(),
-    0,
-    0,
-    0,
-    0,
+  const dateKey = formatDateKey(date);
+  const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const safeTime = normalizeTimeString(time);
+  const [hours, minutes] = safeTime.split(':').map(Number);
+  const hour = Number.isFinite(hours) ? hours : 0;
+  const minute = Number.isFinite(minutes) ? minutes : 0;
+
+  if (!match) {
+    return wallClockToUtcDate(
+      ...(() => {
+        const dateKey = formatDateKey(date);
+        const parts = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!parts) return [1970, 0, 1] as const;
+        return [Number(parts[1]), Number(parts[2]) - 1, Number(parts[3])] as const;
+      })(),
+      hour,
+      minute,
+    );
+  }
+
+  return wallClockToUtcDate(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]),
+    hour,
+    minute,
   );
-  const [hours, minutes] = time.split(':').map(Number);
-  appointmentAt.setHours(hours, minutes, 0, 0);
-  return appointmentAt;
+}
+
+/** Converts calendar date + wall-clock time in APP timezone to a UTC Date. */
+function wallClockToUtcDate(
+  year: number,
+  monthIndex: number,
+  day: number,
+  hour: number,
+  minute: number,
+): Date {
+  const utcMs =
+    Date.UTC(year, monthIndex, day, hour, minute, 0, 0) - APP_TZ_OFFSET_MINUTES * 60 * 1000;
+  return new Date(utcMs);
+}
+
+export function getAppointmentEndDateTime(
+  date: Date,
+  startTime: string,
+  endTime?: string | null,
+): Date {
+  if (endTime && /^\d{1,2}:\d{2}/.test(endTime)) {
+    return getAppointmentDateTime(date, endTime);
+  }
+  return getAppointmentDateTime(date, startTime);
 }

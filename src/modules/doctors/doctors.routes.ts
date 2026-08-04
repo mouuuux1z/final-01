@@ -10,6 +10,7 @@ import {
   availabilityQuerySchema,
   bulkAvailabilitySchema,
   generateAvailabilitySchema,
+  generateFromWeeklyScheduleSchema,
   generateRecurringAvailabilitySchema,
   createAvailabilitySlotSchema,
   createScheduleSchema,
@@ -20,10 +21,12 @@ import {
   slotIdParamSchema,
   updateDoctorSchema,
   updateScheduleSchema,
+  syncWeeklySchedulesSchema,
   adminUpdateDoctorSchema,
 } from './doctors.schema.js';
 import { ratingsController } from '../ratings/ratings.controller.js';
 import { listRatingsQuerySchema, submitRatingSchema } from '../ratings/ratings.schema.js';
+import { queueController } from '../queue/queue.controller.js';
 
 const router = Router();
 
@@ -71,7 +74,16 @@ doctorRouter.patch(
   doctorsController.updateMe,
 );
 doctorRouter.patch('/me/online', validate(onlineStatusSchema), doctorsController.setOnlineStatus);
+doctorRouter.get('/me/patients', doctorsController.listMyPatients);
+doctorRouter.get('/me/queue/today', queueController.getTodayQueue);
+doctorRouter.post('/me/queue/start', queueController.startReception);
+doctorRouter.post('/me/queue/next', queueController.advanceQueue);
 doctorRouter.get('/me/schedules', doctorsController.getSchedules);
+doctorRouter.put(
+  '/me/schedules/weekly',
+  validate(syncWeeklySchedulesSchema),
+  doctorsController.syncWeeklySchedules,
+);
 doctorRouter.post('/me/schedules', validate(createScheduleSchema), doctorsController.createSchedule);
 doctorRouter.patch(
   '/me/schedules/:scheduleId',
@@ -94,6 +106,11 @@ doctorRouter.post(
   '/me/availability/generate-recurring',
   validate(generateRecurringAvailabilitySchema),
   doctorsController.generateRecurringAvailability,
+);
+doctorRouter.post(
+  '/me/availability/generate-from-schedule',
+  validate(generateFromWeeklyScheduleSchema),
+  doctorsController.generateFromWeeklySchedule,
 );
 doctorRouter.get(
   '/me/availability',

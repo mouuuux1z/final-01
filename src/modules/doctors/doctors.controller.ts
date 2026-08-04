@@ -57,6 +57,11 @@ export class DoctorsController {
     sendSuccess(res, null, 'Schedule deleted');
   });
 
+  syncWeeklySchedules = asyncHandler(async (req: Request, res: Response) => {
+    const schedules = await doctorsService.syncWeeklySchedules(req.user!.id, req.body.days);
+    sendSuccess(res, schedules, 'Weekly schedule saved');
+  });
+
   getAvailability = asyncHandler(async (req: Request, res: Response) => {
     const doctorId = parseIdParam(req.params.id, 'id');
     const query = req.query as {
@@ -94,6 +99,11 @@ export class DoctorsController {
     sendSuccess(res, result, 'Recurring availability slots generated', 201);
   });
 
+  generateFromWeeklySchedule = asyncHandler(async (req: Request, res: Response) => {
+    const result = await doctorsService.generateFromWeeklySchedule(req.user!.id, req.body);
+    sendSuccess(res, result, 'Availability generated from weekly schedule', 201);
+  });
+
   getMyAvailability = asyncHandler(async (req: Request, res: Response) => {
     const query = req.query as {
       date?: Date;
@@ -108,6 +118,11 @@ export class DoctorsController {
       availableOnly: query.availableOnly === true || query.availableOnly === 'true',
     });
     sendSuccess(res, slots);
+  });
+
+  listMyPatients = asyncHandler(async (req: Request, res: Response) => {
+    const patients = await doctorsService.listMyPatients(req.user!.id);
+    sendSuccess(res, patients);
   });
 
   deleteAvailabilitySlot = asyncHandler(async (req: Request, res: Response) => {

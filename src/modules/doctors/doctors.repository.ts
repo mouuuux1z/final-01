@@ -359,6 +359,16 @@ export class DoctorsRepository {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async listPatientsForDoctor(doctorId: string) {
+    return prisma.patient.findMany({
+      where: {
+        appointments: { some: { doctorId } },
+      },
+      select: { id: true, name: true, phone: true },
+      orderBy: { name: 'asc' },
+    });
+  }
 }
 
 export const doctorsRepository = new DoctorsRepository();

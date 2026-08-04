@@ -1,7 +1,9 @@
 import { config } from 'dotenv';
+import path from 'node:path';
 import { PrismaClient } from '@prisma/client';
 
-config();
+const backendRoot = path.resolve(__dirname, '../..');
+config({ path: path.join(backendRoot, '.env') });
 
 /**
  * Neon / Railway: strip channel_binding=require and enable PgBouncer mode on pooled URLs.
@@ -68,8 +70,10 @@ function isConnectionClosedError(error: unknown): boolean {
     message.includes('ECONNRESET') ||
     message.includes('ETIMEDOUT') ||
     message.includes('Server has closed the connection') ||
+    message.includes('Timed out fetching a new connection') ||
     code === 'P1001' ||
-    code === 'P1017'
+    code === 'P1017' ||
+    code === 'P2024'
   );
 }
 

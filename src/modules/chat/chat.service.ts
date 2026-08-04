@@ -7,7 +7,7 @@ import {
 import { prisma } from '../../config/database.js';
 import { AppError } from '../../utils/AppError.js';
 import { buildPaginationMeta, parsePagination } from '../../utils/pagination.js';
-import { emitToUser } from '../../websocket/emitter.js';
+import { emitToChat, emitToUser } from '../../websocket/emitter.js';
 import { SocketEvents } from '../../websocket/events.js';
 import { chatRepository } from './chat.repository.js';
 import type { SendMessageInput } from './chat.schema.js';
@@ -61,23 +61,29 @@ export class ChatService {
     }
 
     const senderType = userType === UserType.DOCTOR ? SenderType.DOCTOR : SenderType.PATIENT;
+    const messageText = input.message?.trim() ?? '';
+    if (!messageText && !fileUrl) {
+      throw new AppError('Message or file is required', 400);
+    }
+
     const message = await chatRepository.createMessage({
       doctorId: input.doctorId,
       patientId: input.patientId,
-      message: input.message,
+      message: messageText || '📎',
       senderType,
       fileUrl,
     });
 
     const targetType = userType === UserType.DOCTOR ? UserType.PATIENT : UserType.DOCTOR;
     const targetId = userType === UserType.DOCTOR ? input.patientId : input.doctorId;
+    const notificationPreview = messageText || 'Sent an attachment';
 
     await prisma.notification.create({
       data: {
         targetType: targetType as NotificationTargetType,
         targetId,
         title: 'New message',
-        message: input.message.slice(0, 100),
+        message: notificationPreview.slice(0, 100),
         type: NotificationType.CHAT,
       },
     });
@@ -101,7 +107,26 @@ export class ChatService {
   async markAsRead(doctorId: string, patientId: string, userId: string, userType: UserType) {
     this.assertConversationAccess(doctorId, patientId, userId, userType);
     const readerType = userType === UserType.DOCTOR ? SenderType.DOCTOR : SenderType.PATIENT;
-    return chatRepository.markAsRead(doctorId, patientId, readerType);
+    const result = await chatRepository.markAsRead(doctorId, patientId, readerType);
+
+    if (result.count > 0 && result.readAt) {
+      const payload = {
+        doctorId,
+        patientId,
+        readAt: result.readAt.toISOString(),
+        messageIds: result.messageIds,
+        senderType: result.senderType,
+      };
+
+      emitToChat(doctorId, patientId, SocketEvents.CHAT_READ, payload);
+
+      const senderUserType =
+        result.senderType === SenderType.DOCTOR ? UserType.DOCTOR : UserType.PATIENT;
+      const senderUserId = result.senderType === SenderType.DOCTOR ? doctorId : patientId;
+      emitToUser(senderUserType, senderUserId, SocketEvents.CHAT_READ, payload);
+    }
+
+    return result;
   }
 
   async listConversations(userId: string, userType: UserType, query: Record<string, unknown>) {

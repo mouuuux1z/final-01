@@ -10,7 +10,7 @@ import { requireActiveClinic } from '../../middleware/requireActiveClinic.middle
 
 import { validate } from '../../middleware/validate.middleware.js';
 
-import { uploadCertificate } from '../../middleware/upload.middleware.js';
+import { uploadCertificate, uploadChatFile } from '../../middleware/upload.middleware.js';
 
 import { clinicsController } from './clinics.controller.js';
 
@@ -36,9 +36,14 @@ import { z } from 'zod';
 import {
   availabilityQuerySchema,
   createAvailabilitySlotSchema,
+  createScheduleSchema,
   generateAvailabilitySchema,
+  generateFromWeeklyScheduleSchema,
   generateRecurringAvailabilitySchema,
+  scheduleIdParamSchema,
   slotIdParamSchema,
+  updateScheduleSchema,
+  syncWeeklySchedulesSchema,
   onlineStatusSchema,
 } from '../doctors/doctors.schema.js';
 import {
@@ -69,7 +74,7 @@ const clinicChatPatientBodySchema = z.object({
 
 const clinicChatSendMessageSchema = z.object({
   patientId: z.string().uuid(),
-  message: z.string().min(1).max(5000),
+  message: z.string().max(5000).optional().default(''),
 });
 
 const clinicChatRepliesSchema = z.object({
@@ -109,6 +114,60 @@ router.get(
   validate(doctorIdParamSchema, 'params'),
   clinicsController.getDoctorSchedules,
 );
+router.put(
+  '/me/doctors/:doctorId/schedules/weekly',
+  requireActiveClinic,
+  validate(doctorIdParamSchema, 'params'),
+  validate(syncWeeklySchedulesSchema),
+  clinicsController.syncDoctorWeeklySchedules,
+);
+router.get(
+  '/me/doctors/:doctorId/queue/today',
+  requireActiveClinic,
+  validate(doctorIdParamSchema, 'params'),
+  clinicsController.getDoctorTodayQueue,
+);
+router.post(
+  '/me/doctors/:doctorId/queue/start',
+  requireActiveClinic,
+  validate(doctorIdParamSchema, 'params'),
+  clinicsController.startDoctorReception,
+);
+router.post(
+  '/me/doctors/:doctorId/queue/next',
+  requireActiveClinic,
+  validate(doctorIdParamSchema, 'params'),
+  clinicsController.advanceDoctorQueue,
+);
+router.post(
+  '/me/doctors/:doctorId/schedules',
+  requireActiveClinic,
+  validate(doctorIdParamSchema, 'params'),
+  validate(createScheduleSchema),
+  clinicsController.createDoctorSchedule,
+);
+router.patch(
+  '/me/doctors/:doctorId/schedules/:scheduleId',
+  requireActiveClinic,
+  validate(doctorIdParamSchema, 'params'),
+  validate(scheduleIdParamSchema, 'params'),
+  validate(updateScheduleSchema),
+  clinicsController.updateDoctorSchedule,
+);
+router.delete(
+  '/me/doctors/:doctorId/schedules/:scheduleId',
+  requireActiveClinic,
+  validate(doctorIdParamSchema, 'params'),
+  validate(scheduleIdParamSchema, 'params'),
+  clinicsController.deleteDoctorSchedule,
+);
+router.post(
+  '/me/doctors/:doctorId/availability/generate-from-schedule',
+  requireActiveClinic,
+  validate(doctorIdParamSchema, 'params'),
+  validate(generateFromWeeklyScheduleSchema),
+  clinicsController.generateDoctorFromWeeklySchedule,
+);
 router.post(
   '/me/doctors/:doctorId/availability/generate-recurring',
   requireActiveClinic,
@@ -143,6 +202,12 @@ router.post(
   validate(doctorManualBookSchema),
   clinicsController.manualBookForDoctor,
 );
+router.get(
+  '/me/doctors/:doctorId/patients',
+  requireActiveClinic,
+  validate(doctorIdParamSchema, 'params'),
+  clinicsController.listDoctorPatients,
+);
 router.post(
   '/me/doctors/:doctorId/appointments/:appointmentId/accept',
   requireActiveClinic,
@@ -173,6 +238,7 @@ router.post(
   '/me/doctors/:doctorId/chat/messages',
   requireActiveClinic,
   validate(doctorIdParamSchema, 'params'),
+  uploadChatFile.single('file'),
   validate(clinicChatSendMessageSchema),
   clinicsController.sendDoctorChatMessage,
 );

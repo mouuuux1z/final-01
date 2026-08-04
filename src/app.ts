@@ -5,7 +5,7 @@ import { env } from './config/env.js';
 import { uploadConfig } from './config/upload.js';
 import { generalRateLimit } from './middleware/rateLimit.middleware.js';
 import { errorHandler } from './middleware/errorHandler.middleware.js';
-import apiRoutes from './routes/index.js';
+import apiRoutes, { API_FEATURES } from './routes/index.js';
 import { isDatabaseReady } from './config/database.js';
 
 export function createApp() {
@@ -44,6 +44,7 @@ export function createApp() {
       success: true,
       message: 'MYDoc API is running',
       database,
+      features: API_FEATURES,
     });
   });
 
