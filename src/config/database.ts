@@ -6,7 +6,7 @@ const backendRoot = path.resolve(__dirname, '../..');
 config({ path: path.join(backendRoot, '.env') });
 
 /**
- * Neon / Railway: strip channel_binding=require and enable PgBouncer mode on pooled URLs.
+ * Neon pooled URLs: strip channel_binding=require and enable PgBouncer mode when needed.
  * Prisma reads DATABASE_URL from the environment when the client is created.
  */
 function normalizeDatabaseUrl(url: string, pooled: boolean): string {
