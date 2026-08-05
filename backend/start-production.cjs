@@ -21,7 +21,7 @@ console.log(`${tag} PORT=`, process.env.PORT || '(not set)');
 const required = ['DATABASE_URL', 'JWT_SECRET'];
 for (const key of required) {
   if (!process.env[key]?.trim()) {
-    console.error(`${tag} FATAL: missing env ${key} — add it in Railway Variables`);
+    console.error(`${tag} FATAL: missing env ${key} — add it in backend/.env`);
     process.exit(1);
   }
 }
@@ -37,7 +37,7 @@ if (!fs.existsSync(entry)) {
   if (fs.existsSync(path.join(process.cwd(), 'dist'))) {
     console.error(`${tag} dist contains:`, fs.readdirSync(path.join(process.cwd(), 'dist')).join(', '));
   }
-  console.error(`${tag} Railway: Branch=main, Root Directory=EMPTY (not backend)`);
+  console.error(`${tag} Run npm run production:build before starting the API`);
   process.exit(1);
 }
 

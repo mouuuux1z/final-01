@@ -11,9 +11,7 @@ import { initSocketIO } from './websocket/index.js';
 
 function ensureDatabaseUrl(): void {
   if (!process.env.DATABASE_URL?.trim()) {
-    console.error(
-      'FATAL: DATABASE_URL is not defined. Set DATABASE_URL in Railway Variables before starting the server.',
-    );
+    console.error('FATAL: DATABASE_URL is not defined. Set it in backend/.env on the server.');
     process.exit(1);
   }
 }
@@ -31,13 +29,7 @@ function maskDatabaseHost(databaseUrl: string | undefined): string | null {
 async function bootstrap(): Promise<void> {
   ensureDatabaseUrl();
 
-  const port = Number(process.env.PORT);
-  if (!Number.isFinite(port) || port <= 0) {
-    console.error(
-      'FATAL: PORT is missing. Remove any manual PORT variable from Railway — Railway sets it automatically.',
-    );
-    process.exit(1);
-  }
+  const port = env.PORT;
 
   console.log('Environment check:', {
     port,
@@ -45,20 +37,16 @@ async function bootstrap(): Promise<void> {
     hasDatabaseUrl: Boolean(process.env.DATABASE_URL?.trim()),
     databaseHost: maskDatabaseHost(process.env.DATABASE_URL),
     jwtSecretLength: process.env.JWT_SECRET?.length ?? 0,
-    railwayDomain: process.env.RAILWAY_PUBLIC_DOMAIN ?? null,
   });
 
   const app = createApp();
   const httpServer = http.createServer(app);
   initSocketIO(httpServer);
 
-  // Listen immediately so Railway proxy gets a response (avoids 502 during DB connect).
+  // Listen before DB connect so health checks get a response during startup.
   await new Promise<void>((resolve, reject) => {
     httpServer.listen(port, '0.0.0.0', () => {
       console.log(`MYDoc API listening on 0.0.0.0:${port} [${env.NODE_ENV}]`);
-      if (process.env.RAILWAY_PUBLIC_DOMAIN) {
-        console.log(`Public URL: https://${process.env.RAILWAY_PUBLIC_DOMAIN}`);
-      }
       resolve();
     });
     httpServer.once('error', reject);

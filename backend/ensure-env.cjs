@@ -34,8 +34,6 @@ if (process.env.DATABASE_URL) {
   }
 }
 
-// Do NOT set PORT here — Railway injects PORT automatically.
-
 const command = process.argv[2];
 if (command === '--generate') {
   execSync('npx prisma generate', { stdio: 'inherit', env: process.env });

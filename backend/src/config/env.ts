@@ -11,9 +11,7 @@ function stripQuotes(value: string): string {
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default(process.env.RAILWAY_ENVIRONMENT ? 'production' : 'development'),
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   DATABASE_URL: z.string().min(1),
   DIRECT_DATABASE_URL: z.string().min(1).optional(),
   JWT_SECRET: z.string().min(32),
