@@ -25,7 +25,7 @@
         "backgroundColor": "#2558B8"
       },
       "package": "com.mydoc.appp",
-      "versionCode": 3,
+      "versionCode": 5,
       "usesCleartextTraffic": true
     },
     "web": {

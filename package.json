@@ -26,6 +26,7 @@
     "db:up": "docker compose up -d",
     "db:push": "npm run db:push --prefix backend",
     "build:apk": "powershell -ExecutionPolicy Bypass -File scripts/prebuild-apk.ps1",
+    "build:aab": "powershell -ExecutionPolicy Bypass -File scripts/prebuild-aab.ps1",
     "verify:queue": "powershell -ExecutionPolicy Bypass -File scripts/verify-queue-deployment.ps1"
   },
   "dependencies": {

@@ -113,7 +113,7 @@
       "fileUploadFailed": "فشل رفع الملف. يرجى رفع شهادة صالحة",
       "networkTimeout": "انتهت مهلة الطلب. تحقق من الاتصال وحاول مجدداً",
       "networkUnreachable": "تعذر الاتصال بالخادم. تحقق من الاتصال بـ {{server}}",
-      "routeNotFound": "الخادم لا يدعم إدارة الدور بعد. يجب تحديث الـ Backend على {{server}} ثم إعادة بناء APK.",
+      "routeNotFound": "الخادم لا يدعم إدارة الدور بعد. يجب تحديث Backend على {{server}} ثم إعادة تشغيل API (لا حاجة لإعادة بناء APK إذا كان محدّثاً).",
       "invalidUuid": "معرّف غير صالح",
       "invalidTimeFormat": "صيغة الوقت يجب أن تكون HH:MM",
       "endTimeBeforeStart": "وقت النهاية يجب أن يكون بعد وقت البداية"

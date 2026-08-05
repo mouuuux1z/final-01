@@ -113,7 +113,7 @@
       "fileUploadFailed": "File upload failed. Please upload a valid certificate file.",
       "networkTimeout": "Request timed out. Check your connection and try again.",
       "networkUnreachable": "Cannot reach server. Check your connection to {{server}}",
-      "routeNotFound": "Queue management is not available on the server yet. Update the backend on {{server}}, then rebuild the APK.",
+      "routeNotFound": "Queue management is not available on the server yet. Update the backend on {{server}} and restart the API (no APK rebuild needed if the app is already up to date).",
       "invalidUuid": "Invalid uuid",
       "invalidTimeFormat": "Time must be in HH:MM format",
       "endTimeBeforeStart": "End time must be after start time"
