@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "node ensure-env.cjs --generate && tsc",
+    "build": "tsc",
     "start": "node start-production.cjs",
     "production:build": "node ensure-env.cjs --generate && npx tsc && node scripts/verify-build.cjs",
     "production:start": "node start-production.cjs",
