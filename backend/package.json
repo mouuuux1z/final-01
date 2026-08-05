@@ -12,7 +12,6 @@
     "start": "node start-production.cjs",
     "production:build": "node ensure-env.cjs --generate && npx tsc && node scripts/verify-build.cjs",
     "production:start": "node start-production.cjs",
-    "render:start": "node start-production.cjs",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",

@@ -6,7 +6,7 @@ const entry = path.join(process.cwd(), 'dist', 'server.js');
 if (!fs.existsSync(entry)) {
   console.error(`[verify-build] Missing ${entry}`);
   console.error('[verify-build] cwd:', process.cwd());
-  console.error('[verify-build] Set Render Root Directory to EMPTY (not src, not backend)');
+  console.error('[verify-build] Run npm run production:build from the backend/ directory');
   process.exit(1);
 }
 
