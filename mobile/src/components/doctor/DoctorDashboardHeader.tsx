@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '../AppIcon';
 import { useTypography } from '../../hooks/useTypography';
+import { withCustomFont } from '../../theme/ui';
 import type { DoctorUser } from '../../types';
 
 const HEADER_GRADIENT = ['#3D73E8', '#5B93FA'] as const;
@@ -68,10 +69,10 @@ export function DoctorDashboardHeader({
           </Pressable>
 
           <View style={styles.textGroup}>
-            <Text style={[styles.greeting, { fontFamily: typography.fontFamily }]}>
+            <Text style={[styles.greeting, withCustomFont(typography, 'bold')]}>
               {t(greetingKey, { name: displayName })}
             </Text>
-            <Text style={[styles.subtitle, { fontFamily: typography.fontFamilyRegular }]}>
+            <Text style={[styles.subtitle, withCustomFont(typography, 'regular')]}>
               {user?.specialization || t('doctor.howAreYouToday')}
             </Text>
           </View>
@@ -151,13 +152,11 @@ const styles = StyleSheet.create({
   greeting: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: '700',
     lineHeight: 24,
   },
   subtitle: {
     color: '#E8F1FF',
     fontSize: 13,
-    fontWeight: '500',
     lineHeight: 18,
   },
   notificationButton: {

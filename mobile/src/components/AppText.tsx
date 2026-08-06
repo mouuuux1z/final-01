@@ -1,31 +1,18 @@
 import type { ReactNode } from 'react';
-import { Text, type TextProps, type TextStyle } from 'react-native';
+import { Text, type TextProps } from 'react-native';
 import { useTypography } from '../hooks/useTypography';
-
-type AppTextWeight = 'regular' | 'medium' | 'bold';
+import { withCustomFont, type FontWeightKind } from '../theme/ui';
 
 interface AppTextProps extends TextProps {
   children: ReactNode;
-  weight?: AppTextWeight;
+  weight?: FontWeightKind;
 }
 
 export function AppText({ children, weight = 'regular', style, ...props }: AppTextProps) {
   const typography = useTypography();
 
-  const fontFamily =
-    weight === 'bold'
-      ? typography.fontFamily
-      : weight === 'medium'
-        ? typography.fontFamilyMedium
-        : typography.fontFamilyRegular;
-
-  const textStyle: TextStyle = {
-    fontFamily,
-    fontWeight: typography.bodyWeight,
-  };
-
   return (
-    <Text {...props} style={[textStyle, style]}>
+    <Text {...props} style={[withCustomFont(typography, weight), style]}>
       {children}
     </Text>
   );

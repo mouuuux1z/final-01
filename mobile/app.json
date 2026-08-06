@@ -30,7 +30,16 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-font",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/MadikaArabic-Regular.otf",
+            "./assets/fonts/MadikaArabic-Medium.otf",
+            "./assets/fonts/MadikaArabic-ExtraBold.otf"
+          ]
+        }
+      ],
       "expo-secure-store",
       "expo-localization",
       "expo-asset",

@@ -3,7 +3,7 @@ import { AppLoader } from '../AppLoader';
 import { useTranslation } from 'react-i18next';
 import { getDayChipLabels, toDateInputValue } from '../../utils/appointmentHelpers';
 import { useTypography } from '../../hooks/useTypography';
-import { UI, cardShadowStyle } from '../../theme/ui';
+import { UI, cardShadowStyle, withCustomFont } from '../../theme/ui';
 
 interface DaySectionHeaderProps {
   dateKey: string;
@@ -50,13 +50,13 @@ export function DaySectionHeader({
             </Text>
             {isToday ? (
               <View style={styles.todayChip}>
-                <Text style={[styles.todayChipText, { fontFamily: typography.fontFamilyMedium }]}>
+                <Text style={[styles.todayChipText, withCustomFont(typography, 'medium')]}>
                   {t('doctor.todayLabel')}
                 </Text>
               </View>
             ) : null}
           </View>
-          <Text style={[styles.month, { fontFamily: typography.fontFamilyRegular }]}>{labels.month}</Text>
+          <Text style={[styles.month, withCustomFont(typography, 'regular')]}>{labels.month}</Text>
         </View>
 
         {onDelete ? (
@@ -68,7 +68,7 @@ export function DaySectionHeader({
             {deletePending ? (
               <AppLoader size="small" color="#DC2626" />
             ) : (
-              <Text style={[styles.deleteText, { fontFamily: typography.fontFamilyMedium }]}>
+              <Text style={[styles.deleteText, withCustomFont(typography, 'medium')]}>
                 {deleteLabel}
               </Text>
             )}
@@ -138,7 +138,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: UI.text.secondary,
-    fontWeight: '500',
   },
   todayChip: {
     borderRadius: 999,
@@ -152,7 +151,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
     color: '#15803D',
-    fontWeight: '600',
   },
   deleteButton: {
     borderRadius: 10,
@@ -172,6 +170,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     color: '#DC2626',
-    fontWeight: '600',
   },
 });

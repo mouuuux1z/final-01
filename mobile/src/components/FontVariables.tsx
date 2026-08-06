@@ -3,14 +3,20 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { vars } from 'nativewind';
 import { FONT_STACKS, isArabicLanguage } from '../theme/ui';
+import { areArabicFontsLoaded } from '../theme/fontAvailability';
 
 interface FontVariablesProps {
   children: ReactNode;
+  arabicFontsLoaded?: boolean;
 }
 
-export function FontVariables({ children }: FontVariablesProps) {
+export function FontVariables({ children, arabicFontsLoaded }: FontVariablesProps) {
   const { i18n } = useTranslation();
-  const stack = isArabicLanguage(i18n.language) ? FONT_STACKS.arabic : FONT_STACKS.english;
+  const arabicReady = arabicFontsLoaded ?? areArabicFontsLoaded();
+  const stack =
+    isArabicLanguage(i18n.language) && arabicReady
+      ? FONT_STACKS.arabic
+      : FONT_STACKS.english;
 
   return (
     <View

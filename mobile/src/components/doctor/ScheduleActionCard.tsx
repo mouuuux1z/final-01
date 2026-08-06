@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 import { AppIcon, type AppIconName } from '../AppIcon';
-import { UI, cardShadowStyle } from '../../theme/ui';
+import { UI, cardShadowStyle, withCustomFont } from '../../theme/ui';
 import { useTypography } from '../../hooks/useTypography';
 
 interface ScheduleActionCardProps {
@@ -44,8 +44,7 @@ export function ScheduleActionCard({
             className="text-base"
             style={{
               color: UI.text.primary,
-              fontFamily: typography.fontFamilyMedium,
-              fontWeight: '600',
+              ...withCustomFont(typography, 'medium'),
             }}
           >
             {title}

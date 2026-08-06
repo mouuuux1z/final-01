@@ -26,6 +26,14 @@
   font-display: swap;
 }
 
+/* Native (APK): default body text uses loaded font files (locale via CSS vars) */
+@layer base {
+  text {
+    font-family: var(--font-regular, Inter_400Regular);
+    font-weight: normal;
+  }
+}
+
 /* Native (APK): map Tailwind font weights to loaded Expo font files (locale via CSS vars) */
 @layer utilities {
   .font-normal {

@@ -1,4 +1,4 @@
-import { I18nManager, Text, View } from 'react-native';
+import { I18nManager, Text, View, type TextStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppLogo } from '../AppLogo';
 import { useTypography } from '../../hooks/useTypography';
@@ -17,11 +17,13 @@ function ColoredLine({
   parts,
   fontSize,
   fontFamily,
+  fontWeight,
   textAlign,
 }: {
   parts: ColoredPart[];
   fontSize: number;
   fontFamily: string;
+  fontWeight: TextStyle['fontWeight'];
   textAlign: 'left' | 'right' | 'center';
 }) {
   return (
@@ -30,7 +32,7 @@ function ColoredLine({
         fontSize,
         lineHeight: fontSize * 1.35,
         fontFamily,
-        fontWeight: '700',
+        fontWeight,
         textAlign,
       }}
     >
@@ -70,6 +72,7 @@ export function LoginHeroTagline() {
         <ColoredLine
           fontSize={26}
           fontFamily={typography.fontFamily}
+          fontWeight={typography.headingWeight}
           textAlign="center"
           parts={[
             { text: 'في اي ', color: 'blue' },
@@ -98,6 +101,7 @@ export function LoginHeroTagline() {
         <ColoredLine
           fontSize={24}
           fontFamily={typography.fontFamily}
+          fontWeight={typography.headingWeight}
           textAlign="center"
           parts={[
             { text: 'Any ', color: 'blue' },

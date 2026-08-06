@@ -4,6 +4,7 @@ import {
   getSpecializationFilter,
   type SpecialtyCategoryId,
 } from '../constants/specialties';
+import { areArabicFontsLoaded } from './fontAvailability';
 
 /** Visual identity sourced from backend/prisma/info.json */
 export const FONT_STACKS = {
@@ -33,8 +34,12 @@ export function isArabicLanguage(language?: string): boolean {
   return language?.startsWith('ar') ?? false;
 }
 
+export type FontWeightKind = 'regular' | 'medium' | 'bold';
+
 export function getTypography(language?: string): AppTypography {
-  const stack = isArabicLanguage(language) ? FONT_STACKS.arabic : FONT_STACKS.english;
+  const wantsArabic = isArabicLanguage(language);
+  const stack =
+    wantsArabic && areArabicFontsLoaded() ? FONT_STACKS.arabic : FONT_STACKS.english;
   const useNamedFontFiles = Platform.OS !== 'web';
 
   return {
@@ -44,6 +49,24 @@ export function getTypography(language?: string): AppTypography {
     // Android ignores custom fontFamily when fontWeight is also set on the same Text node.
     headingWeight: useNamedFontFiles ? 'normal' : '700',
     bodyWeight: useNamedFontFiles ? 'normal' : '400',
+  };
+}
+
+/** Apply a loaded font file without triggering Android fontWeight conflicts. */
+export function withCustomFont(
+  typography: AppTypography,
+  weight: FontWeightKind = 'regular',
+): Pick<TextStyle, 'fontFamily' | 'fontWeight'> {
+  const fontFamily =
+    weight === 'bold'
+      ? typography.fontFamily
+      : weight === 'medium'
+        ? typography.fontFamilyMedium
+        : typography.fontFamilyRegular;
+
+  return {
+    fontFamily,
+    fontWeight: weight === 'bold' ? typography.headingWeight : typography.bodyWeight,
   };
 }
 

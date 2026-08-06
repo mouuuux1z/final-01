@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import { TAB_ACTIVE_COLOR, TAB_INACTIVE_COLOR } from '../components/AppIcon';
-import { UI, navShadowStyle, getTypography } from '../theme/ui';
+import { UI, navShadowStyle, getTypography, withCustomFont } from '../theme/ui';
 import i18n from '../i18n';
 
 export function getDefaultTabBarOptions() {
@@ -21,8 +21,7 @@ export function getDefaultTabBarOptions() {
     },
     tabBarLabelStyle: {
       fontSize: 11,
-      fontWeight: '600' as const,
-      fontFamily: typography.fontFamilyMedium,
+      ...withCustomFont(typography, 'medium'),
     },
     sceneContainerStyle: { backgroundColor: 'transparent' },
     lazy: true,

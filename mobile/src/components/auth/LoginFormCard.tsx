@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useTypography } from '../../hooks/useTypography';
+import { withCustomFont } from '../../theme/ui';
 
 const CARD_GRADIENT = ['#FFFFFF', '#F4F7FB'] as const;
 const BUTTON_GRADIENT = ['#1089D3', '#12B1D1'] as const;
@@ -188,7 +189,7 @@ export function LoginFormCard({
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={[styles.loginButtonText, { fontFamily: typography.fontFamilyMedium }]}>
+                <Text style={[styles.loginButtonText, withCustomFont(typography, 'bold')]}>
                   {t('auth.login')}
                 </Text>
               )}
@@ -273,7 +274,6 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     color: '#FFFFFF',
-    fontWeight: '700',
     fontSize: 16,
   },
 });

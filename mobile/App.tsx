@@ -10,8 +10,7 @@ import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-c
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Platform } from 'react-native';
 import { useEffect, useRef } from 'react';
-import { useFonts } from 'expo-font';
-import { APP_FONT_SOURCES } from './src/theme/fonts';
+import { useAppFonts } from './src/hooks/useAppFonts';
 import { logRuntimeDiagnostics } from './src/constants/runtimeConfig';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
@@ -48,25 +47,22 @@ function UnauthorizedHandler() {
 }
 
 function MainContent() {
-  const skipFontGate = Platform.OS === 'web';
-  const [fontsLoaded, fontError] = useFonts(APP_FONT_SOURCES);
-
-  const fontsReady = skipFontGate || fontsLoaded || Boolean(fontError);
+  const { fontsReady, fontError, arabicFontsLoaded } = useAppFonts();
 
   if (!fontsReady) {
     return <LoadingScreen />;
   }
 
   if (fontError && Platform.OS !== 'web') {
-    console.warn('[fonts] Failed to load custom fonts:', fontError);
+    console.warn('[fonts] Failed to load core fonts:', fontError);
   }
 
   return (
-    <>
+    <FontVariables arabicFontsLoaded={arabicFontsLoaded}>
       <UnauthorizedHandler />
       <RootNavigator />
       <StatusBar style="dark" />
-    </>
+    </FontVariables>
   );
 }
 
@@ -77,9 +73,7 @@ export default function App() {
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
           <QueryClientProvider client={queryClient}>
             <ScreenBackground>
-              <FontVariables>
-                <MainContent />
-              </FontVariables>
+              <MainContent />
             </ScreenBackground>
           </QueryClientProvider>
         </SafeAreaProvider>

@@ -10,7 +10,7 @@ import { resolveLoginUserType } from '../../constants/testAccounts';
 import { useTypography } from '../../hooks/useTypography';
 import { useAuthStore } from '../../store/authStore';
 import { getLoginErrorMessage, getLoginPendingRoute } from '../../utils/authErrors';
-import { UI, cardShadowStyle } from '../../theme/ui';
+import { UI, cardShadowStyle, withCustomFont } from '../../theme/ui';
 import type { UserType } from '../../types';
 import type { AuthStackParamList } from '../../navigation/AuthStack';
 
@@ -123,8 +123,7 @@ export function LoginScreen({ navigation }: Props) {
                     className="flex-1 text-base"
                     style={{
                       color: '#000000',
-                      fontFamily: typography.fontFamilyMedium,
-                      fontWeight: '600',
+                      ...withCustomFont(typography, 'medium'),
                     }}
                   >
                     {t(option.labelKey)}
