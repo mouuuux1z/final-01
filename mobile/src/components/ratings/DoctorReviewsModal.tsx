@@ -8,7 +8,7 @@ import { DoctorReviewForm } from './DoctorReviewForm';
 import { getDoctorRatings, getMyRatingForDoctor } from '../../services/ratingsApi';
 import { getApiErrorMessage } from '../../services/api';
 import { ReviewCard } from './ReviewCard';
-import { UI } from '../../theme/ui';
+import { UI, withCustomFont } from '../../theme/ui';
 import { useTypography } from '../../hooks/useTypography';
 
 interface DoctorReviewsModalProps {
@@ -62,10 +62,7 @@ export function DoctorReviewsModal({
       <View className="border-b px-5 py-4" style={{ borderColor: UI.border }}>
         <View className="flex-row items-center justify-between">
           <View className="flex-1 pr-3">
-            <Text
-              className="text-lg"
-              style={{ fontFamily: typography.fontFamily, fontWeight: typography.headingWeight, color: UI.text.primary }}
-            >
+            <Text className="text-lg" style={{ ...withCustomFont(typography, 'bold'), color: UI.text.primary }}>
               {t('ratings.reviews')}
             </Text>
             <Text className="mt-0.5 text-sm" style={{ color: UI.text.secondary }}>
@@ -86,77 +83,69 @@ export function DoctorReviewsModal({
         </View>
       </View>
 
-      <View style={appModalStyles.body}>
-        <ScrollView
-          style={appModalStyles.scroll}
-          contentContainerStyle={[appModalStyles.scrollContent, { paddingHorizontal: 20, paddingTop: 16 }]}
-          nestedScrollEnabled
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator
-        >
-          <View className="mb-6 rounded-card border bg-white p-4" style={{ borderColor: UI.border }}>
-            <Text
-              className="mb-3 text-base font-bold"
-              style={{ fontFamily: typography.fontFamily, fontWeight: typography.headingWeight, color: UI.text.primary }}
-            >
-              {t('ratings.addYourReview')}
+      <ScrollView
+        style={appModalStyles.scroll}
+        contentContainerStyle={[appModalStyles.scrollContent, { paddingHorizontal: 20, paddingTop: 16 }]}
+        nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator
+      >
+        <View className="mb-6 rounded-card border bg-white p-4" style={{ borderColor: UI.border }}>
+          <Text className="mb-3 text-base font-bold" style={{ ...withCustomFont(typography, 'bold'), color: UI.text.primary }}>
+            {t('ratings.addYourReview')}
+          </Text>
+          <DoctorReviewForm
+            doctorId={doctorId}
+            eligible={Boolean(myRatingStatus?.eligible)}
+            existingRating={myRatingStatus?.rating}
+            onSuccess={() => {
+              void refetch();
+            }}
+          />
+        </View>
+
+        <Text className="mb-3 text-base font-bold" style={{ ...withCustomFont(typography, 'bold'), color: UI.text.primary }}>
+          {t('ratings.allPatientReviews')}
+        </Text>
+
+        {isLoading ? (
+          <AppLoader className="py-8" />
+        ) : isError ? (
+          <View className="gap-3 py-4">
+            <Text className="text-center text-sm" style={{ color: UI.text.secondary }}>
+              {getApiErrorMessage(error)}
             </Text>
-            <DoctorReviewForm
-              doctorId={doctorId}
-              eligible={Boolean(myRatingStatus?.eligible)}
-              existingRating={myRatingStatus?.rating}
-              onSuccess={() => {
-                void refetch();
-              }}
+            <Button title={t('common.retry')} onPress={() => void refetch()} variant="outline" />
+          </View>
+        ) : reviews.length > 0 ? (
+          <View className="gap-4">
+            {reviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                patientName={review.patientName}
+                rating={review.rating}
+                comment={review.comment}
+                createdAt={review.createdAt}
+              />
+            ))}
+          </View>
+        ) : (
+          <Text className="py-4 text-center text-sm" style={{ color: UI.text.secondary }}>
+            {t('ratings.noReviews')}
+          </Text>
+        )}
+
+        {hasNextPage ? (
+          <View className="mt-4">
+            <Button
+              title={t('ratings.loadMore')}
+              onPress={() => void fetchNextPage()}
+              loading={isFetchingNextPage}
+              variant="outline"
             />
           </View>
-
-          <Text
-            className="mb-3 text-base font-bold"
-            style={{ fontFamily: typography.fontFamily, fontWeight: typography.headingWeight, color: UI.text.primary }}
-          >
-            {t('ratings.allPatientReviews')}
-          </Text>
-
-          {isLoading ? (
-            <AppLoader className="py-8" />
-          ) : isError ? (
-            <View className="gap-3 py-4">
-              <Text className="text-center text-sm" style={{ color: UI.text.secondary }}>
-                {getApiErrorMessage(error)}
-              </Text>
-              <Button title={t('common.retry')} onPress={() => void refetch()} variant="outline" />
-            </View>
-          ) : reviews.length > 0 ? (
-            <View className="gap-4">
-              {reviews.map((review) => (
-                <ReviewCard
-                  key={review.id}
-                  patientName={review.patientName}
-                  rating={review.rating}
-                  comment={review.comment}
-                  createdAt={review.createdAt}
-                />
-              ))}
-            </View>
-          ) : (
-            <Text className="py-4 text-center text-sm" style={{ color: UI.text.secondary }}>
-              {t('ratings.noReviews')}
-            </Text>
-          )}
-
-          {hasNextPage ? (
-            <View className="mt-4">
-              <Button
-                title={t('ratings.loadMore')}
-                onPress={() => void fetchNextPage()}
-                loading={isFetchingNextPage}
-                variant="outline"
-              />
-            </View>
-          ) : null}
-        </ScrollView>
-      </View>
+        ) : null}
+      </ScrollView>
     </AppModal>
   );
 }

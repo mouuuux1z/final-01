@@ -12,7 +12,13 @@ import {
 import type { ReactNode } from 'react';
 import { UI } from '../theme/ui';
 
-const SHEET_MAX_HEIGHT = Dimensions.get('window').height * 0.9;
+const WINDOW_HEIGHT = Dimensions.get('window').height;
+const SHEET_MAX_HEIGHT = WINDOW_HEIGHT * 0.9;
+const SHEET_HEIGHT = Platform.select({
+  android: Math.round(WINDOW_HEIGHT * 0.85),
+  ios: Math.round(WINDOW_HEIGHT * 0.85),
+  default: undefined,
+}) as number | undefined;
 
 interface AppModalProps extends Pick<ModalProps, 'visible' | 'onRequestClose' | 'animationType'> {
   children: ReactNode;
@@ -30,6 +36,10 @@ export function AppModal({
 }: AppModalProps) {
   const close = onBackdropPress ?? onRequestClose;
 
+  if (!visible) {
+    return null;
+  }
+
   return (
     <Modal
       visible={visible}
@@ -37,6 +47,7 @@ export function AppModal({
       animationType={animationType}
       onRequestClose={onRequestClose}
       statusBarTranslucent
+      hardwareAccelerated={Platform.OS === 'android'}
     >
       <View style={styles.overlay}>
         <Pressable
@@ -45,7 +56,7 @@ export function AppModal({
           onPress={close}
           style={styles.backdrop}
         />
-        <View style={styles.sheet} className={sheetClassName}>
+        <View style={styles.sheet} className={sheetClassName} collapsable={false}>
           {children}
         </View>
       </View>
@@ -71,20 +82,29 @@ const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    zIndex: 0,
   },
   sheet: {
     width: '100%',
     maxHeight: SHEET_MAX_HEIGHT,
-    minHeight: Platform.OS === 'android' ? 320 : 200,
+    ...(SHEET_HEIGHT != null
+      ? {
+          height: SHEET_HEIGHT,
+          minHeight: SHEET_HEIGHT,
+        }
+      : {
+          minHeight: 200,
+        }),
     backgroundColor: UI.surface,
     borderTopLeftRadius: UI.radius.card,
     borderTopRightRadius: UI.radius.card,
     overflow: 'hidden',
     flexDirection: 'column',
+    position: 'relative',
+    zIndex: 1,
     ...(Platform.OS === 'android'
       ? {
-          elevation: 12,
-          zIndex: 2,
+          elevation: 16,
         }
       : {}),
     ...(Platform.OS === 'web'
@@ -99,7 +119,7 @@ const styles = StyleSheet.create({
 export const appModalStyles = StyleSheet.create({
   body: {
     flex: 1,
-    maxHeight: Platform.OS === 'android' ? SHEET_MAX_HEIGHT * 0.72 : SHEET_MAX_HEIGHT * 0.8,
+    minHeight: 0,
   },
   scroll: {
     flex: 1,
